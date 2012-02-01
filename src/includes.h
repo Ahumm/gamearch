@@ -2,7 +2,7 @@
 #define _INCLUDES_H_
 
 #include "globaldefs.h"
-#include "lib/vector.h"
-#include "lib/matrix.h"
+#include "vector.h"
+#include "matrix.h"
 
 #endif

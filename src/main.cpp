@@ -40,7 +40,7 @@ int main(){
   Cube c;
 
   string input = "";
-  float i[7] = {0,0,0,0,0,0,0};
+  float i[7] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0};
 
   bool changed = true;
 
@@ -53,7 +53,7 @@ int main(){
     do{
       if(input != "") break;
       cout << "--> ";
-      getline(cin, input);
+      cin >> input;
     }while(1);
 
     changed = true;
@@ -63,96 +63,50 @@ int main(){
       break;
     }
     if(input == "translateX"){
-      cout << "Enter 1 number (X): ";
-      scanf("%f", &i[0]);
-      //cin >> i[0];
+      cin >> i[0];
       c.transform.translateX(i[0]);
     }
     else if(input == "translateY"){
-      cout << "Enter 1 number (Y): ";
-      scanf("%f", &i[0]);
-      //cin >> i[0];
+      cin >> i[0];
       c.transform.translateY(i[0]);
     }
     else if(input == "translateZ"){
-      cout << "Enter 1 number (Z): ";
-      scanf("%f", &i[0]);
-      //cin >> i[0];
+      cin >> i[0];
       c.transform.translateZ(i[0]);
     }
     else if(input == "rotateH"){
-      cout << "Enter 1 number (H): ";
-      scanf("%f", &i[0]);
-      //cin >> i[0];
+      cin >> i[0];
       c.transform.rotateH(i[0]);
     }
     else if(input == "rotateP"){
-      cout << "Enter 1 number (P): ";
-      scanf("%f", &i[0]);
-      //cin >> i[0];
+      cin >> i[0];
       c.transform.rotateP(i[0]);
     }
     else if(input == "rotateR"){
-      cout << "Enter 1 number (R): ";
-      scanf("%f", &i[0]);
-      //cin >> i[0];
+      cin >> i[0];
       c.transform.rotateR(i[0]);
     }
     else if(input == "scale"){
-      cout << "uniform or nonuniform? ";
-      getline(cin, input);
-      if(input == "uniform"){
-        cout << "Enter 1 number (S): ";
-        scanf("%f", i[0]);
-        //cin >> i[0];
-        c.transform.scale(i[0]);
-      }
-      else if(input == "nonuniform"){
-        cout << "Enter 3 numbers (SX, SY, SZ): ";
-        scanf("%f %f %f", i[0], i[1], i[2]);
-        //cin >> i[0] >> i[1] >> i[2];
-        c.transform.scale(i[0],i[1],i[2]);
-      }
-      else{
-        cout << "Input not recognized, jumping back..." << endl;
-        changed = false;
-      }
+      cin >> input;
+      cin >> i[0];
+      c.transform.scale(i[0]);
     }
     else if(input == "translateXYZ"){
-      cout << "floats or vector3? ";
-      getline(cin, input);
-      if(input == "floats"){
-        cout << "Enter 3 numbers (X,Y,Z): ";
-        scanf("%f %f %f", i[0], i[1], i[2]);
-        //cin >> i[0] >> i[1] >> i[2];
-        c.transform.translateXYZ(i[0],i[1],i[2]);
-      }
-      else if(input == "vector3"){
-        cout << "Enter 3 numbers (X,Y,Z) (Vectored behind the scenes): ";
-        scanf("%f %f %f", i[0], i[1], i[2]);
-        //cin >> i[0] >> i[1] >> i[2];
-        c.transform.translateXYZ(t_stuff::Vector3(i[0],i[1],i[2]));
-      }
-      else{
-        cout << "Input not recognized, jumping back..." << endl;
-        changed = false;
-      }
+      cin >> input;
+      cin >> i[0] >> i[1] >> i[2];
+      c.transform.translateXYZ(i[0],i[1],i[2]);
     }
     else if(input == "rotateHPR"){
-      cout << "Enter 3 numbers (H,P,R): ";
-      scanf("%f %f %f", i[0], i[1], i[2]);
-      //cin >> i[0] >> i[1] >> i[2];
+      cin >> i[0] >> i[1] >> i[2];
       c.transform.rotateHPR(i[0],i[1],i[2]);
     }
     else if(input == "transformXYZHPRS"){
-      cout << "Enter 7 numbers (X,Y,Z,H,P,R,S): ";
-      scanf("%f %f %f %f %f %f %f", i[0], i[1], i[2], i[3], i[4], i[5], i[6]);
-      //cin >> i[0] >> i[1] >> i[2] >> i[3] >> i[4] >> i[5] >> i[6];
+      cin >> i[0] >> i[1] >> i[2] >> i[3] >> i[4] >> i[5] >> i[6];
       c.transform.transformXYZHPRS(i[0],i[1],i[2],i[3],i[4],i[5],i[6]);
     }
     else if(input == "reset"){ c.reset(); }
     else if(input == "help"){
-      cout<< "Available commands: (Note: Must match exactly)\n\treset :: exit :: help :: print ::\n\ttranslateX :: translateY :: translateZ :: translateXYZ ::\n\trotateH :: rotateP :: rotateR :: rotateHPR ::\n\tscale ::\n\ttransformXYZHPRS"<<endl;
+      cout<< "\tAvailable commands: (Note: Must match exactly)\n\t\treset :: exit :: help :: print ::\n\t\ttranslateX <float> :: translateY <float> :: translateZ <float> ::\n\t\ttranslateXYZ <float> <float> <float> ::\n\t\trotateH <float> :: rotateP <float> :: rotateR <float> ::\n\t\trotateHPR <float> <float> <float> :: scale <float> ::\n\t\ttransformXYZHPRS <float> <float> <float> <float> <float> <float> <float>"<<endl;
       changed = false;
     }
     else if(input == "print"){}
