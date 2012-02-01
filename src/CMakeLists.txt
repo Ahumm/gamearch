@@ -1,13 +1,11 @@
 cmake_minimum_required(VERSION 2.6)
 
+include_directories(${GAMEARCH_SOURCE_DIR}/src)
+link_directories(${GAMEARCH_BINARY_DIR}/src})
+
 set(
-        SOURCES
-        matrix.h
-        vector.h
-        includes.h
-        globaldefs.h
+        HW1_SOURCES
+        main.cpp
 )
 
-add_library(matrix_vector ${SOURCES})
-
-SET_TARGET_PROPERTIES(matrix_vector PROPERTIES LINKER_LANGUAGE C)
+add_executable(hw1 ${HW1_SOURCES})
