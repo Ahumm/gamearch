@@ -152,7 +152,7 @@ namespace mvp {
                 this->m_data[5*i] = 1;
             }
         }
-        // STD::INITIALIZER_LIST CONSTRUCTOR (PAD: 0)
+        // FLOAT ARRAY CONSTRUCTOR (PAD: 0)
         Matrix4(const float* s) : Matrix<float>(4,4) {
             size_t i;
             for(i = 0; i < 16; ++i)
@@ -223,7 +223,7 @@ namespace mvp {
             return tmp;
         }
 
-        // ASSINGMENT: STD::INITIALIZERLIST<FLOAT> -> MATRIX4 (PAD: 0)
+        // ASSINGNMENT: FLOAT ARRAY -> MATRIX4 (PAD: 0)
         Matrix4& operator=(const float* s){
             // CLEAN UP
             if(this->m_data){

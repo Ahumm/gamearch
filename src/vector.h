@@ -113,7 +113,7 @@ namespace mvp {
         // DEFAULT CONSTRUCTOR: {0,0,0,0}
         Vector3() : Vector<float,4>() {}
         
-        // STD::INITIALIZER_LIST CONSTRUCTOR
+        // FLOAT ARRAY CONSTRUCTOR
         Vector3(const float* s) : Vector<float,4>(s) {
             this->v_data[3] = 0.0;
         }
@@ -147,6 +147,13 @@ namespace mvp {
             this->v_data[3] = 0.0;
         }        
 
+        void set(const float x, const float y, const float z, const float w){
+            this->v_data[0] = x;
+            this->v_data[1] = y;
+            this->v_data[2] = z;
+            this->v_data[3] = w;
+        }
+
         // OBTAIN CROSS PRODUCT OF THIS AND VECTOR3 O
         Vector3 cross(const Vector3& o){
             Vector3 ret;
@@ -156,7 +163,7 @@ namespace mvp {
             return ret;
         }
         
-        // ASSIGNMENT: STD::INITIALIZER_LIST -> VECTOR3
+        // ASSIGNMENT: FLOAT ARRAY -> VECTOR3
         Vector3& operator=(const float* s){
             for(size_t i = 0; i < 4; ++i)
                 this->v_data[i] = s[i];
@@ -231,8 +238,15 @@ namespace mvp {
             this->v_data[2] = z;
             this->v_data[3] = 1.0;
         }
+
+        void set(const float x, const float y, const float z, const float w){
+            this->v_data[0] = x;
+            this->v_data[1] = y;
+            this->v_data[2] = z;
+            this->v_data[3] = w;
+        }
         
-        // ASSIGNMENT: STD::INITIALIZER_LIST<FLOAT> -> POINT
+        // ASSIGNMENT: FLOAT ARRAY -> POINT
         Point& operator=(const float* s){
             for(size_t i = 0; i < 4; i++)
                 this->v_data[i] = s[i];
@@ -240,7 +254,7 @@ namespace mvp {
             return *this;
         }
         
-        // ASSIGNEMENT: POINT -> POINT
+        // ASSIGNMENT: POINT -> POINT
         Point& operator=(const Point& o){
             if(this == &o)
                 return *this;
@@ -278,9 +292,7 @@ namespace mvp {
     // POINT - POINT = VECTOR3
     Vector3 operator-(const Point& p1, const Point & p2){
         return Vector3(p1[0] - p2[0], p1[1] - p2[1], p1[2] - p2[2]);
-    }
-        
-        
-        
+    }        
 }
+
 #endif
