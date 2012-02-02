@@ -1,1 +1,11 @@
 Game Architecture - Spring 2012
+
+
+Homework 1 - Vector & Matrix, Cube Transformation
+    Compiling:
+        Current implementation requires a compiler with support for std::array and std::initializer_list from c++0x/c++11. gcc 4.6 ought to be fine.
+        To build:
+           $ cmake .
+           $ make
+           Ought to produce a hw1 binary in ./bin/ simply run that to get to the prompt. input is function name followed by any arguements separated by a space. help lists all available functions.
+                

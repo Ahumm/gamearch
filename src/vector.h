@@ -8,7 +8,7 @@
 namespace mvp {
     // GENERIC VECTOR OF N MANY T'S
     template <class T, size_t N>
-        class Vector {
+    class Vector {
     public:
         // DEFAULT CONSTRUCTOR: {0,0, ... ,0}
         Vector(){ v_data.fill(0); }
@@ -25,7 +25,7 @@ namespace mvp {
                 v_data[i] = T(0);
             }
         }
-
+        
         // STD::ARRAY CONSTRUCTOR
         Vector(const std::array<T,N> arr){ v_data = arr; }
 
@@ -118,7 +118,7 @@ namespace mvp {
     
     // EXPLICIT VECTOR<FLOAT,4> (X,Y,Z,W) (VECTOR IN 3D SPACE)
     class Vector3 : public Vector<float,4> {
-     public:
+    public:
         // DEFAULT CONSTRUCTOR: {0,0,0,0}
         Vector3() : Vector<float,4>() {}
         
@@ -205,7 +205,7 @@ namespace mvp {
 
     // EXPLICIT VECTOR<FLOAT,4> (X,Y,Z,W) (POINT IN 3D SPACE)
     class Point : public Vector<float,4> {
-     public:
+    public:
         // DEFAULT CONSTRUCTOR: {0,0,0,1}
         Point() : Vector<float,4>() { this->v_data[3] = 1; }
         Point(const std::initializer_list<float>& s) : Vector<float,4>(s) {
@@ -256,12 +256,12 @@ namespace mvp {
 
     // VECTOR3 + VECTOR3 = VECTOR3
     Vector3 operator+(const Vector3& v1, const Vector3& v2){
-        return Vector3(v1[0] + v1[0], v1[1] + v2[1], v1[2] + v2[2]);
+        return Vector3(v1[0] + v2[0], v1[1] + v2[1], v1[2] + v2[2]);
     }
 
     // VECTOR3 - VECTOR3 = VECTOR3
     Vector3 operator-(const Vector3& v1, const Vector3& v2){
-        return Vector3(v1[0] - v1[0], v1[1] - v2[1], v1[2] - v2[2]);
+        return Vector3(v1[0] - v2[0], v1[1] - v2[1], v1[2] - v2[2]);
     }
 
     // POINT + VECTOR3 = POINT
