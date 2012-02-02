@@ -5,7 +5,7 @@
 #include <iostream>
 #include <math.h>
 
-namespace t_stuff {
+namespace mvp {
     // GENERIC VECTOR OF N MANY T'S
     template <class T, size_t N>
         class Vector {

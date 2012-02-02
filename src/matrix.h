@@ -5,7 +5,7 @@
 #include <iostream>
 #include <math.h>
 
-namespace t_stuff {
+namespace mvp {
     // GENERIC NxM MATRIX<T>
     template <class T>
         class Matrix{
@@ -96,12 +96,14 @@ namespace t_stuff {
         T& at(const int c, const int r){ return m_data[cols*r+c]; }
         const T& at(const int c, const int r) const { return m_data[cols*r+c]; }
         
-        // MULTIPLICATION ASSIGNMENT: MULTIPLY NxM MATRIX<T> BY OxP MATRIX<T>, STORE RESULT MxO MATRIX<T> AS THIS
+        // MULTIPLICATION ASSIGNMENT: MULTIPLY NxM MATRIX<T> BY OxN MATRIX<T>, STORE RESULT MxO MATRIX<T> AS THIS
         Matrix<T>& operator*=(const Matrix<T>& o){
             size_t r1 = rows;
             size_t c1 = cols;
             size_t c2 = o.cols;
 
+            //            if(c1 != o.rows){
+                
             // TMP HOLDER
             Matrix<T> tmp(r1,c2);
             // START OF THIS
@@ -304,12 +306,12 @@ namespace t_stuff {
         }
         // ADD TRANSLATE ALONG X, Y, AND Z (FLOATS)
         void translateXYZ(const float nx, const float ny, const float nz){
-            Matrix4 tmp1, tmp2, tmp3;
+            Matrix4 tmp;
             // GENERATE TRANSLATEXYZ MATRIX, THEN APPLY
-            tmp1.at(3,0) = nx;
-            tmp2.at(3,1) = ny;
-            tmp3.at(3,2) = nz;
-            copyin(*this * tmp1 * tmp2 * tmp3);
+            tmp.at(3,0) = nx;
+            tmp.at(3,1) = ny;
+            tmp.at(3,2) = nz;
+            copyin(*this * tmp);
         }
         // ADD TRANSLATE ALONG X, Y, Z (VECTOR3)
         void translateXYZ(const Vector3& o){

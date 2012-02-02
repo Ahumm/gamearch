@@ -7,8 +7,8 @@ using namespace std;
 
 class Cube{
  public:
-  t_stuff::Matrix4 transform;
-  array<t_stuff::Point,8> verts;
+  mvp::Matrix4 transform;
+  array<mvp::Point,8> verts;
 
   Cube(){ reset(); }
 
@@ -88,14 +88,16 @@ int main(){
       c.transform.rotateR(i[0]);
     }
     else if(input == "scale"){
-      cin >> input;
       cin >> i[0];
       c.transform.scale(i[0]);
     }
     else if(input == "translateXYZ"){
-      cin >> input;
       cin >> i[0] >> i[1] >> i[2];
       c.transform.translateXYZ(i[0],i[1],i[2]);
+    }
+    else if(input == "translateXYZ-V"){
+      cin >> i[0] >> i[1] >> i[2];
+      c.transform.translateXYZ(mvp::Vector3(i[0],i[1],i[2]));
     }
     else if(input == "rotateHPR"){
       cin >> i[0] >> i[1] >> i[2];
@@ -107,7 +109,7 @@ int main(){
     }
     else if(input == "reset"){ c.reset(); }
     else if(input == "help"){
-      cout<< "\tAvailable commands: (Note: Must match exactly)\n\t\treset :: exit :: help :: print ::\n\t\ttranslateX <float> :: translateY <float> :: translateZ <float> ::\n\t\ttranslateXYZ <float> <float> <float> ::\n\t\trotateH <float> :: rotateP <float> :: rotateR <float> ::\n\t\trotateHPR <float> <float> <float> :: scale <float> ::\n\t\ttransformXYZHPRS <float> <float> <float> <float> <float> <float> <float>"<<endl;
+      cout<< "\tAvailable commands: (Note: Must match exactly)\n\t\treset :: exit :: help :: print ::\n\t\ttranslateX <float> :: translateY <float> :: translateZ <float> ::\n\t\ttranslateXYZ <float> <float> <float> ::\n\t\ttranslateXYZ-V <float> <float> <float ::\n\t\trotateH <float> :: rotateP <float> :: rotateR <float> ::\n\t\trotateHPR <float> <float> <float> :: scale <float> ::\n\t\ttransformXYZHPRS <float> <float> <float> <float> <float> <float> <float>"<<endl;
       changed = false;
     }
     else if(input == "print"){}
@@ -117,13 +119,6 @@ int main(){
     }
     if(changed) c.print(cout, 1);
     
-    cout<< endl; /* << "\tinput: " << input << "\n\tchanged: " << changed
-        << "\n\ti[0]: " << i[0]
-        << "\n\ti[1]: " << i[1]
-        << "\n\ti[2]: " << i[2]
-        << "\n\ti[3]: " << i[3]
-        << "\n\ti[4]: " << i[4]
-        << "\n\ti[5]: " << i[5]
-        << "\n\ti[6]: " << i[6] << endl;*/
+    cout<< endl;
   }
 }
