@@ -1,7 +1,7 @@
 #ifndef _MATRIX4_H_
 #define _MATRIX4_H_
 
-#include <array>
+//#include <array>
 #include <iostream>
 #include <math.h>
 
@@ -153,15 +153,10 @@ namespace mvp {
             }
         }
         // STD::INITIALIZER_LIST CONSTRUCTOR (PAD: 0)
-        Matrix4(const std::initializer_list<float> s) : Matrix<float>(4,4) {
-            auto p = s.begin();
+        Matrix4(const float* s) : Matrix<float>(4,4) {
             size_t i;
-            for(i = 0; i < 16 && p != s.end(); ++i){
-                this->m_data[i] = *p;
-                ++p;
-            }
-            for(; i <16; ++i)
-                this->m_data[i] = 0;
+            for(i = 0; i < 16; ++i)
+                this->m_data[i] = s[i];
         }
         // COPY CONSTRUCTOR
         Matrix4(const Matrix4& o) : Matrix<float>(4,4) {
@@ -184,7 +179,7 @@ namespace mvp {
 
         // MULTIPLY MATRIX4 THIS BY MATRIX4 O, RETURNS MATRIX4. SEE MATRIX<T>::OPERATOR*(MATRIX<T>) FOR COMMENTS
         Matrix4 operator*(const Matrix4& o){
-            Matrix4 tmp({});
+            Matrix4 tmp;
             const float* p1 = &this->m_data[0];
             const float* p2 = &o.m_data[0];
             float* ptmp = &tmp.m_data[0];
@@ -203,7 +198,7 @@ namespace mvp {
         // MULTIPLY MATRIX4 THIS BY VECTOR3 O, RETURNS VECTOR3
         Vector3 operator*(const Vector3& o){
             // INITIALIZE
-            Vector3 tmp({0,0,0,0});
+            Vector3 tmp(0,0,0,0);
 
             // COMPUTE ROW BY ROW CROSS PRODUCT WITH VECTOR3 O
             for(size_t r = 0; r < 4; ++r){
@@ -217,7 +212,7 @@ namespace mvp {
         // MULTIPLY MATRIX4 THIS BY POINT 0, RETURNS POINT
         Point operator*(const Point& o){
             // INITIALIZE
-            Point tmp({0,0,0,1});
+            Point tmp(0,0,0,1);
             
             // COMPUTE ROW BY ROW CROSS PRODUCT WITH POINT O
             for(size_t r = 0; r < 4; ++r){
@@ -229,8 +224,7 @@ namespace mvp {
         }
 
         // ASSINGMENT: STD::INITIALIZERLIST<FLOAT> -> MATRIX4 (PAD: 0)
-        Matrix4& operator=(const std::initializer_list<float> s){
-            auto p = s.begin();
+        Matrix4& operator=(const float* s){
             // CLEAN UP
             if(this->m_data){
                 delete this->m_data;
@@ -240,14 +234,8 @@ namespace mvp {
             this->m_data = new float[16];
             // COPY IN
             size_t i;
-            for(i = 0; i < 16 && p != s.end(); ++i){
-                this->m_data[i] = *p;
-                ++p;
-            }
-            // PAD WITH ZERO
-            for(;i<16;++i){
-                this->m_data[i] = 0.0;
-            }
+            for(i = 0; i < 16; ++i)
+                this->m_data[i] = s[i];
             return *this;
         }
         
