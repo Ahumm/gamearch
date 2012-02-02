@@ -1,54 +1,45 @@
 #ifndef _MATRIX4_H_
 #define _MATRIX4_H_
 
-#include <array>
+//#include <array>
 #include <iostream>
 #include <math.h>
 
 namespace mvp {
     // GENERIC NxM MATRIX<T>
-    template <class T>
+    // N = Num columns
+    // M = num rows
+    template <class T, size_t N, size_t M>
         class Matrix{
     public:
         // NxM CONSTRUCTOR
-        Matrix(size_t c, size_t r){
-            rows = r;
-            cols = c;
-            // CREATE ARRAY AND INITIALIZE TO ALL ZEROS
-            m_data = new T[rows*cols];
-            for(size_t i = 0; i < rows*cols; ++i){
-                m_data[i] = 0;
+        Matrix(){
+            // INITIALIZE ARRAY TO ALL ZEROS
+            for(size_t i = 0; i < N * M; ++i){
+                m_data[i] = T(0);
             }
         }
 
         // COPY CONSTRUCTOR
-        Matrix(const Matrix<T>& o){
-            rows = o.rows;
-            cols = o.cols;
+        Matrix(const Matrix<T,N,M>& o){
             // CREATE ARRAY AND COPY FROM O
-            m_data = new T[rows*cols];
-            for(size_t i = 0; i < rows*cols; ++i){
+            for(size_t i = 0; i < N * M; ++i){
                 m_data[i] = o.m_data[i];
             }
         }
 
         // DESTRUCTOR
-        ~Matrix(){
-            if(m_data){
-                delete m_data;
-                m_data = 0;
-            }
-        }
+        ~Matrix(){ }
         
         // PRINT MATRIX TO OUT (| BORDER)
         void print(std::ostream& out){
             // MODIFY PRECISION
             std::streamsize tp = out.precision(5);
-            for(int r = 0; r < rows; ++r){
+            for(int r = 0; r < N; ++r){
                 out<<"\t| ";
-                for (size_t c = 0; c < cols; ++c){
-                    if(m_data[rows*r+c] >= 0) out << ' ';
-                    out << std::fixed << m_data[rows*r+c] << " ";
+                for (size_t c = 0; c < M; ++c){
+                    if(m_data[M*r+c] >= 0) out << ' ';
+                    out << std::fixed << m_data[M*r+c] << " ";
                 }
                 out<<"|"<<std::endl;
             }
@@ -60,11 +51,11 @@ namespace mvp {
         void print(std::ostream& out, std::string s){
             // MODIFY PRECISION
             std::streamsize tp = out.precision(5);
-            for(int r = 0; r < rows; ++r){
+            for(int r = 0; r < N; ++r){
                 out << s << "| ";
-                for (size_t c = 0; c < cols; ++c){
-                    if(m_data[rows*r+c] >= 0) out << ' ';
-                    out << std::fixed << m_data[rows*r+c] << " ";
+                for (size_t c = 0; c < M; ++c){
+                    if(m_data[M*r+c] >= 0) out << ' ';
+                    out << std::fixed << m_data[M*r+c] << " ";
                 }
                 out << "|" << std::endl;
             }
@@ -73,39 +64,29 @@ namespace mvp {
         }
         
         // ASSIGNMENT: NxM MATRIX<T> -> NxM MATRIX<T>
-        Matrix<T>& operator=(const Matrix<T>& o){
+        Matrix<T,N,M>& operator=(const Matrix<T,N,M>& o){
             if(this == &o)
                 return *this;
-            rows = o.rows;
-            cols = o.cols;
-            // CLEAN UP
-            if(m_data){
-                delete m_data;
-                m_data = 0;
-            }
-            // ALLOCATE NEW ARRAY
-            m_data = new T[rows*cols];
             // COPY FROM O
-            for(size_t i = 0; i < rows*cols; ++i){
+            for(size_t i = 0; i < N * M; ++i){
                 m_data[i] = o.m_data[i];
             }
             return *this;
         }
         
         // ACCESSORS
-        T& at(const int c, const int r){ return m_data[cols*r+c]; }
-        const T& at(const int c, const int r) const { return m_data[cols*r+c]; }
+        T& at(const int c, const int r){ return m_data[M*r+c]; }
+        const T& at(const int c, const int r) const { return m_data[M*r+c]; }
         
         // MULTIPLICATION ASSIGNMENT: MULTIPLY NxM MATRIX<T> BY OxN MATRIX<T>, STORE RESULT MxO MATRIX<T> AS THIS
-        Matrix<T>& operator*=(const Matrix<T>& o){
-            size_t r1 = rows;
-            size_t c1 = cols;
-            size_t c2 = o.cols;
-
-            //            if(c1 != o.rows){
+        template<size_t O>
+        Matrix<T,N,O>& operator*=(const Matrix<T,M,O>& o){
+            //size_t r1 = rows;   // = N
+            //size_t c1 = cols;   // = M
+            //size_t c2 = o.cols; // = O
                 
             // TMP HOLDER
-            Matrix<T> tmp(r1,c2);
+            Matrix<T,N,O> tmp();
             // START OF THIS
             const T* p1 = &m_data[0];
             // START OF O
@@ -113,13 +94,13 @@ namespace mvp {
             // START OF TMP
             T* ptmp = &tmp.m_data[0];
 
-            for(size_t r = 0; r < r1; ++r){
-                for(size_t c = 0; c < c2; ++c){
+            for(size_t r = 0; r < N; ++r){
+                for(size_t c = 0; c < O; ++c){
                     // INITIALIZE TO 0
-                    ptmp[r*c2+c] = T(0);
+                    ptmp[r*O+c] = T(0);
                     // ESSENTIALLY DOT ROW R FROM THIS WITH COL C OF O
-                    for(size_t tc = 0; tc < c1; ++tc){
-                        ptmp[r*c2+c] += p1[r*c1+tc] * p2[tc*c2+c];
+                    for(size_t tc = 0; tc < M; ++tc){
+                        ptmp[r*O+c] += p1[r*M+tc] * p2[tc*O+c];
                     }
                 }
             }
@@ -128,63 +109,48 @@ namespace mvp {
         }
         
     protected:
-        T* m_data;
-        size_t rows;
-        size_t cols;
+        T m_data[N * M];
     };
 
+
+
     // MULTIPLICATION OPERATOR: NxM MATRIX<T> * OxP MATRIX<T> = MxO MATRIX<T>
-    template<class T>
-    Matrix<T>& operator*(const Matrix<T>& o1, const Matrix<T>& o2){
+    template<class T, size_t N, size_t M, size_t O>
+    Matrix<T,N,O>& operator*(const Matrix<T,N,M>& o1, const Matrix<T,M,O>& o2){
         // COPY SO AS NOT TO OVERWRITE
-        Matrix<T> m = o1;
+        Matrix<T,N,O> m = o1;
         // WRAP OVER MULTIPLICATION ASSIGNMENT
         return m *= 02;
     }
 
 
     // EXPLICIT 4x4 MATRIX<FLOAT>
-    class Matrix4 : public Matrix<float>{
-     public:
+    class Matrix4 : public Matrix<float,4,4> {
+    public:
         // DEFAULT CONSTRUCTOR
-        Matrix4() : Matrix<float>(4,4) {
+        Matrix4() : Matrix<float,4,4>() {
             for(size_t i = 0; i < 4; ++i){
                 this->m_data[5*i] = 1;
             }
         }
-        // STD::INITIALIZER_LIST CONSTRUCTOR (PAD: 0)
-        Matrix4(const std::initializer_list<float> s) : Matrix<float>(4,4) {
-            auto p = s.begin();
+        // FLOAT ARRAY CONSTRUCTOR (PAD: 0)
+        Matrix4(const float* s) : Matrix<float,4,4>() {
             size_t i;
-            for(i = 0; i < 16 && p != s.end(); ++i){
-                this->m_data[i] = *p;
-                ++p;
-            }
-            for(; i <16; ++i)
-                this->m_data[i] = 0;
+            for(i = 0; i < 16; ++i)
+                this->m_data[i] = s[i];
         }
         // COPY CONSTRUCTOR
-        Matrix4(const Matrix4& o) : Matrix<float>(4,4) {
-            this->rows = 4;
-            this->cols = 4;
-            if(this->m_data){
-                delete this->m_data;
-                this->m_data = 0;
-            }
-            this->m_data = new float[16];
+        Matrix4(const Matrix4& o) : Matrix<float,4,4>() {
             for(size_t i = 0; i < 16; ++i)
                 this->m_data[i] = o.m_data[i];
         }
 
         // DESTRUCTOR
-        ~Matrix4(){
-            delete this->m_data;
-            this->m_data = 0;
-        }
+        ~Matrix4(){ }
 
         // MULTIPLY MATRIX4 THIS BY MATRIX4 O, RETURNS MATRIX4. SEE MATRIX<T>::OPERATOR*(MATRIX<T>) FOR COMMENTS
         Matrix4 operator*(const Matrix4& o){
-            Matrix4 tmp({});
+            Matrix4 tmp;
             const float* p1 = &this->m_data[0];
             const float* p2 = &o.m_data[0];
             float* ptmp = &tmp.m_data[0];
@@ -203,7 +169,7 @@ namespace mvp {
         // MULTIPLY MATRIX4 THIS BY VECTOR3 O, RETURNS VECTOR3
         Vector3 operator*(const Vector3& o){
             // INITIALIZE
-            Vector3 tmp({0,0,0,0});
+            Vector3 tmp(0,0,0,0);
 
             // COMPUTE ROW BY ROW CROSS PRODUCT WITH VECTOR3 O
             for(size_t r = 0; r < 4; ++r){
@@ -217,7 +183,7 @@ namespace mvp {
         // MULTIPLY MATRIX4 THIS BY POINT 0, RETURNS POINT
         Point operator*(const Point& o){
             // INITIALIZE
-            Point tmp({0,0,0,1});
+            Point tmp(0,0,0,1);
             
             // COMPUTE ROW BY ROW CROSS PRODUCT WITH POINT O
             for(size_t r = 0; r < 4; ++r){
@@ -228,26 +194,12 @@ namespace mvp {
             return tmp;
         }
 
-        // ASSINGMENT: STD::INITIALIZERLIST<FLOAT> -> MATRIX4 (PAD: 0)
-        Matrix4& operator=(const std::initializer_list<float> s){
-            auto p = s.begin();
-            // CLEAN UP
-            if(this->m_data){
-                delete this->m_data;
-                this->m_data = 0;
-            }
-            // ALLOCATE NEW ARRAY
-            this->m_data = new float[16];
+        // ASSINGNMENT: FLOAT ARRAY -> MATRIX4 (PAD: 0)
+        Matrix4& operator=(const float* s){
             // COPY IN
             size_t i;
-            for(i = 0; i < 16 && p != s.end(); ++i){
-                this->m_data[i] = *p;
-                ++p;
-            }
-            // PAD WITH ZERO
-            for(;i<16;++i){
-                this->m_data[i] = 0.0;
-            }
+            for(i = 0; i < 16; ++i)
+                this->m_data[i] = s[i];
             return *this;
         }
         
@@ -255,16 +207,6 @@ namespace mvp {
         Matrix4& operator=(const Matrix4& o){
             if(this == &o)
                 return *this;
-            // SET LEGACY VARIABLES
-            this->rows = 4;
-            this->cols = 4;
-            // CLEAN UP
-            if(this->m_data){
-                delete this->m_data;
-                this->m_data = 0;
-            }
-            // ALLOCATE NEW ARRAY
-            this->m_data = new float[16];
             // COPY IN
             for(size_t i = 0; i < 16; ++i)
                 this->m_data[i] = o.m_data[i];
@@ -272,8 +214,8 @@ namespace mvp {
         }
 
         // ACCESSORS
-        float& at(const size_t c, const size_t r){ return this->m_data[cols*r+c]; }
-        const float& at(const size_t c, const size_t r) const { return this->m_data[cols*r+c]; }
+        float& at(const size_t c, const size_t r){ return this->m_data[4*r+c]; }
+        const float& at(const size_t c, const size_t r) const { return this->m_data[4*r+c]; }
       
 
 
@@ -426,13 +368,6 @@ namespace mvp {
 
         // RESET THIS TO IDENTITY MATRIX4
         void reset(){
-            // CLEAN UP
-            if(this->m_data){
-                delete this->m_data;
-                this->m_data = 0;
-            }
-            // ALLOCATE NEW ARRAY
-            this->m_data = new float[16];
             // INITIALIZE TO IDENTITY MATRIX4
             for(size_t r = 0; r < 4; ++r)
                 for(size_t c = 0; c< 4; ++c)

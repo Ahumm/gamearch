@@ -1,7 +1,7 @@
 #ifndef _VECTOR_H_
 #define _VECTOR_H_
 
-#include <array>
+//#include <array>
 #include <iostream>
 #include <math.h>
 
@@ -11,26 +11,21 @@ namespace mvp {
     class Vector {
     public:
         // DEFAULT CONSTRUCTOR: {0,0, ... ,0}
-        Vector(){ v_data.fill(0); }
-        // STD::INITIALIZER_LIST<T> CONSTRUCTOR (PAD: 0)
-        Vector(const std::initializer_list<T> s){
-            auto p = s.begin();
-            size_t i;
-            for(i = 0; i < N && p != s.end(); ++i){
-                v_data[i] = *p;
-                ++p;
-            }
-            // PAD WITH ZEROS IF NEEDED
-            for(; i < N; ++i){
+        Vector(){
+            for(size_t i = 0; i < N; ++i)
                 v_data[i] = T(0);
-            }
         }
         
-        // STD::ARRAY CONSTRUCTOR
-        Vector(const std::array<T,N> arr){ v_data = arr; }
-
+        Vector(const T* arr){
+            for(size_t i = 0; i < N; ++i)
+                v_data[i] = arr[i];
+        }
+        
         // COPY CONSTRUCTOR
-        Vector(const Vector<T,N>& o){ v_data = o.v_data; }
+        Vector(const Vector<T,N>& o){
+            for(size_t i = 0; i < N; ++i)
+                v_data[i] = o.v_data[i];
+        }
         
         // PRINT ALL ELEMENTS TO OUT
         void print(std::ostream& out){
@@ -46,7 +41,7 @@ namespace mvp {
             // RESTORE PRECISION
             out.precision(tp);
         }
-
+        
         // PRINT FIRST NOUT ELEMENTS TO OUT
         void print(std::ostream& out, int nout){
             // MODIFY PRECISION
@@ -62,27 +57,23 @@ namespace mvp {
             out.precision(tp);
         }
         
-        // ASSIGNMENT: STD::INITIALIZER_LIST<T> -> VECTOR<T,N>
-        Vector<T,N>& operator=(const std::initializer_list<T>& s){
-            auto p = s.begin();
-            for(size_t i = 0; i < N && p != s.end(); ++i){
-                v_data[i] = *p;
-                ++p;
-            }
-            return *this;
-        }
-        
         // ASSIGNMENT: VECTOR<T,N> -> VECTOR<T,N>
         Vector<T,N>& operator=(const Vector<T,N>& o){
             if(this == &o)
                 return *this;
-            v_data = o.v_data;
+            for(size_t i = 0; i < N; ++i)
+                v_data[i] = o.v_data[i];
             return *this;
         }
-
+        
+        Vector<T,N>& operator=(const T* arr){
+            for(size_t i = 0; i < N; ++i)
+                v_data[i] = arr[i];
+        }
+        
         // VECTOR<T,N> + VECTOR<T,N> = VECTOR<T,N>
         Vector<T,N> operator+(const Vector<T,N>& o){
-            std::array<T,N> tmp;
+            T tmp[N];
             for(size_t i = 0; i < N; ++i)
                 tmp[i] = v_data[i] + o.v_data[i];
             return Vector<T,N>(tmp);
@@ -90,7 +81,7 @@ namespace mvp {
 
         // VECTOR<T,N> - VECTOR<T,N> = VECTOR<T,N>
         Vector<T,N> operator-(const Vector<T,N>& o){
-            std::array<T,N> tmp;
+            T tmp[N];
             for(size_t i = 0; i < N; ++i)
                 tmp[i] = v_data[i] - o.v_data[i];
             return Vector<T,N>(tmp);
@@ -113,7 +104,7 @@ namespace mvp {
         
     protected:
         // STL ARRAY, WOO
-        std::array<T,N> v_data;
+        T v_data[N];
     };
     
     // EXPLICIT VECTOR<FLOAT,4> (X,Y,Z,W) (VECTOR IN 3D SPACE)
@@ -122,10 +113,9 @@ namespace mvp {
         // DEFAULT CONSTRUCTOR: {0,0,0,0}
         Vector3() : Vector<float,4>() {}
         
-        // STD::INITIALIZER_LIST CONSTRUCTOR
-        Vector3(const std::initializer_list<float>& s) : Vector<float,4>(s) {
-            if(s.size() == 3)
-                this->v_data[3] = 0.0;
+        // FLOAT ARRAY CONSTRUCTOR
+        Vector3(const float* s) : Vector<float,4>(s) {
+            this->v_data[3] = 0.0;
         }
 
         // MANUAL CONSTRUCTION, LIMITED
@@ -145,8 +135,24 @@ namespace mvp {
         }
 
         // COPY CONSTRUCTOR
-        Vector3(const Vector3& o){ this->v_data = o.v_data; }
-        
+        Vector3(const Vector3& o){
+            for(size_t i; i < 4; ++i)
+                this->v_data[i] = o.v_data[i];
+        }
+
+        void set(const float x, const float y, const float z){
+            this->v_data[0] = x;
+            this->v_data[1] = y;
+            this->v_data[2] = z;
+            this->v_data[3] = 0.0;
+        }        
+
+        void set(const float x, const float y, const float z, const float w){
+            this->v_data[0] = x;
+            this->v_data[1] = y;
+            this->v_data[2] = z;
+            this->v_data[3] = w;
+        }
 
         // OBTAIN CROSS PRODUCT OF THIS AND VECTOR3 O
         Vector3 cross(const Vector3& o){
@@ -157,15 +163,10 @@ namespace mvp {
             return ret;
         }
         
-        // ASSIGNMENT: STD::INITIALIZER_LIST -> VECTOR3
-        Vector3& operator=(const std::initializer_list<float>& s){
-            auto p = s.begin();
-            for(size_t i = 0; i < 4 && p != s.end(); ++i){
-                this->v_data[i] = *p;
-                ++p;
-            }
-            if(s.size() == 3)
-                this->v_data[3] = 0.0;
+        // ASSIGNMENT: FLOAT ARRAY -> VECTOR3
+        Vector3& operator=(const float* s){
+            for(size_t i = 0; i < 4; ++i)
+                this->v_data[i] = s[i];
             return *this;
         }
         
@@ -173,16 +174,16 @@ namespace mvp {
         Vector3& operator=(const Vector3& o){
             if(this == &o)
                 return *this;
-            this->v_data = o.v_data;
+            for(size_t i = 0; i < 4; ++i)
+                this->v_data[i] = o.v_data[i];
             return *this;
         }
 
         // OBTAIN VECTOR'S MAGNITUDE
         float magnitude(){
             float tmp = 0;
-            for(size_t i = 0; i < 3; ++i){
+            for(size_t i = 0; i < 3; ++i)
                 tmp += this->v_data[i] * this->v_data[i];
-            }
             return sqrt(tmp);
         }
         
@@ -207,9 +208,9 @@ namespace mvp {
     class Point : public Vector<float,4> {
     public:
         // DEFAULT CONSTRUCTOR: {0,0,0,1}
-        Point() : Vector<float,4>() { this->v_data[3] = 1; }
-        Point(const std::initializer_list<float>& s) : Vector<float,4>(s) {
-            this->v_data[3] = 1.0;
+        Point() : Vector<float,4>() { this->v_data[3] = 1.0; }
+        Point(const float* s) : Vector<float,4>(s) {
+                this->v_data[3] = 1.0;
         }
         // MANUAL CONSTRUCTION, LIMITED
         Point(const float x, const float y, const float z) : Vector<float,4>(){
@@ -226,25 +227,39 @@ namespace mvp {
             this->v_data[3] = w;
         }
         // COPY CONSTRUCTOR
-        Point(const Point& o){ this->v_data = o.v_data; }
+        Point(const Point& o){
+            for(size_t i = 0; i < 4; ++i)
+                this->v_data[i] = o.v_data[i];
+        }
+
+        void set(const float x, const float y, const float z){
+            this->v_data[0] = x;
+            this->v_data[1] = y;
+            this->v_data[2] = z;
+            this->v_data[3] = 1.0;
+        }
+
+        void set(const float x, const float y, const float z, const float w){
+            this->v_data[0] = x;
+            this->v_data[1] = y;
+            this->v_data[2] = z;
+            this->v_data[3] = w;
+        }
         
-        // ASSIGNMENT: STD::INITIALIZER_LIST<FLOAT> -> POINT
-        Point& operator=(const std::initializer_list<float>& s){
-            auto p = s.begin();
-            for(size_t i = 0; i < 4 && p != s.end(); i++){
-                this->v_data[i] = *p;
-                ++p;
-            }
-            if(s.size() == 3)
-                this->v_data[3] = 1.0;
+        // ASSIGNMENT: FLOAT ARRAY -> POINT
+        Point& operator=(const float* s){
+            for(size_t i = 0; i < 4; i++)
+                this->v_data[i] = s[i];
+            this->v_data[3] = 1.0;
             return *this;
         }
         
-        // ASSIGNEMENT: POINT -> POINT
+        // ASSIGNMENT: POINT -> POINT
         Point& operator=(const Point& o){
             if(this == &o)
                 return *this;
-            this->v_data = o.v_data;
+            for(size_t i = 0; i < 4; ++i)
+                this->v_data[i] = o.v_data[i];
             return *this;
         }
     };
@@ -277,9 +292,7 @@ namespace mvp {
     // POINT - POINT = VECTOR3
     Vector3 operator-(const Point& p1, const Point & p2){
         return Vector3(p1[0] - p2[0], p1[1] - p2[1], p1[2] - p2[2]);
-    }
-        
-        
-        
+    }        
 }
+
 #endif

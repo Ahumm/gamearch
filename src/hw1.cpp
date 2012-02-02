@@ -1,5 +1,5 @@
 #include <iostream>
-#include <array>
+//#include <array>
 #include "vector.h"
 #include "matrix.h"
 
@@ -8,19 +8,19 @@ using namespace std;
 class Cube{
  public:
   mvp::Matrix4 transform;
-  array<mvp::Point,8> verts;
+  mvp::Point verts[8];
 
   Cube(){ reset(); }
 
   void reset(){
-    verts[0] = { 1, 1, 1, 1};
-    verts[1] = { 1, 1,-1, 1};
-    verts[2] = { 1,-1, 1, 1};
-    verts[3] = { 1,-1,-1, 1};
-    verts[4] = {-1, 1, 1, 1};
-    verts[5] = {-1, 1,-1, 1};
-    verts[6] = {-1,-1, 1, 1};
-    verts[7] = {-1,-1,-1, 1};
+    verts[0].set( 1, 1, 1);
+    verts[1].set( 1, 1,-1);
+    verts[2].set( 1,-1, 1);
+    verts[3].set( 1,-1,-1);
+    verts[4].set(-1, 1, 1);
+    verts[5].set(-1, 1,-1);
+    verts[6].set(-1,-1, 1);
+    verts[7].set(-1,-1,-1);
     transform.reset();
   }
 
@@ -118,7 +118,10 @@ int main(){
       cout << "Input not recognized, enter \"help\" for options."<<endl;
     }
     if(changed) c.print(cout, 1);
-    
+
+    // FLUSH THE LINE
+    getline(cin, input);
+
     cout<< endl;
   }
 }
