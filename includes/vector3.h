@@ -1,7 +1,9 @@
 #ifndef _VECTOR3_H_
 #define _VECTOR3_H_
 
-namespace core
+#include <iostream>
+
+namespace mvp
 {
     template<class T>
     class vector3
@@ -28,11 +30,24 @@ namespace core
             v_data[0] = v_data[1] = v_data[2] = n;
         }
 
-        vector3(const vector3d& v)
+        vector3(const vector3& v)
         {
             v_data[0] = v.v_data[0];
             v_data[1] = v.v_data[1];
             v_data[2] = v.v_data[2];
+        }
+
+        ///////////
+        // PRINT //
+        ///////////
+
+        // PRINT ALL ELEMENTS TO OUT
+        void print(std::ostream& out){
+            // MODIFY PRECISION
+            std::streamsize tp = out.precision(5);
+            out << '(' << v_data[0] << ", " << v_data[1] << ", " << v_data[2] << ')' << std::endl;
+            // RESTORE PRECISION
+            out.precision(tp);
         }
 
         ///////////////
@@ -121,12 +136,12 @@ namespace core
                               v_data[1] + o.v_data[1],
                               v_data[2] + o.v_data[2]);
         }
-        vector<T>& operator+=(const vector3<T>& o)
+        vector3<T>& operator+=(const vector3<T>& o)
         {
             v_data[0] += o.v_data[0];
             v_data[1] += o.v_data[1];
             v_data[2] += o.v_data[2];
-            return *this
+            return *this;
         }
         vector3<T> operator+(const T& o) const
         {
@@ -154,12 +169,12 @@ namespace core
                               v_data[1] - o.v_data[1],
                               v_data[2] - o.v_data[2]);
         }
-        vector<T>& operator-=(const vector3<T>& o)
+        vector3<T>& operator-=(const vector3<T>& o)
         {
             v_data[0] -= o.v_data[0];
             v_data[1] -= o.v_data[1];
             v_data[2] -= o.v_data[2];
-            return *this
+            return *this;
         }
         vector3<T> operator-(const T& o) const
         {
@@ -181,12 +196,12 @@ namespace core
                               v_data[1] * o.v_data[1],
                               v_data[2] * o.v_data[2]);
         }
-        vector<T>& operator*=(const vector3<T>& o)
+        vector3<T>& operator*=(const vector3<T>& o)
         {
             v_data[0] *= o.v_data[0];
             v_data[1] *= o.v_data[1];
             v_data[2] *= o.v_data[2];
-            return *this
+            return *this;
         }
         vector3<T> operator*(const T& o) const
         {
@@ -208,12 +223,12 @@ namespace core
                               v_data[1] / o.v_data[1],
                               v_data[2] / o.v_data[2]);
         }
-        vector<T>& operator/=(const vector3<T>& o)
+        vector3<T>& operator/=(const vector3<T>& o)
         {
             v_data[0] /= o.v_data[0];
             v_data[1] /= o.v_data[1];
             v_data[2] /= o.v_data[2];
-            return *this
+            return *this;
         }
         vector3<T> operator/(const T& o) const
         {
@@ -229,53 +244,43 @@ namespace core
             return *this;
         }
 
-
-    protected:
-        T v_data[3];
-    };
-
-    //////////////////////////////
-    // SPECIALIZATION FOR FLOAT //
-    //////////////////////////////
-
-    template <>
-    class vector3<float>
-    {
-    public:
-        float magnitude() const
+        T magnitude() const
         {
-            return sqrt(v_data[0] * v_data[0] +
-                        v_data[1] * v_data[1] +
-                        v_data[2] * v_data[2]);
+            return sqrt(at(0) * at(0) +
+                        at(1) * at(1) +
+                        at(2) * at(2));
         }
-        vector3<float>& normalize()
+        vector3<T>& normalize()
         {
-            float mag = magnitude_squared();
+            T mag = magnitude_squared();
             if(mag == 0)
             {
                 return *this; // PREVENT DIVIDE BY ZERO ERRORS
             }
             mag = magnitude();
-            v_data[0] = v_data[0] / mag;
-            v_data[1] = v_data[1] / mag;
-            v_data[2] = v_data[2] / mag;
+            at(0) = at(0) / mag;
+            at(1) = at(1) / mag;
+            at(2) = at(2) / mag;
             return *this;
         }
 
-        vector3<float> normalized() const
+        vector3<T> normalized() const
         {
             if(magnitude_squared() == 0)
             {
-                return vector3<float>; // PREVENT DIVIDE BY ZERO ERRORS
+                return vector3<T>(); // PREVENT DIVIDE BY ZERO ERRORS
             }
-            return vector3<float>(*this) / magnitude;
+            return vector3<T>(*this) / magnitude;
         }
 
-        vector3<float>& set_magnitude(float n_mag)
+        vector3<T>& set_magnitude(const T& n_mag)
         {
             normalize();
             return (*this *= n_mag);
         }
+
+    protected:
+        T v_data[3];
     };
 }
 

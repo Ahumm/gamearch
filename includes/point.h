@@ -3,7 +3,7 @@
 
 #include "vector3.h"
 
-namespace core
+namespace mvp
 {
     template<class T>
     class point
@@ -30,11 +30,24 @@ namespace core
             v_data[0] = v_data[1] = v_data[2] = n;
         }
 
-        point(const pointd& v)
+        point(const point<T>& v)
         {
             v_data[0] = v.v_data[0];
             v_data[1] = v.v_data[1];
             v_data[2] = v.v_data[2];
+        }
+
+        ///////////
+        // PRINT //
+        ///////////
+
+        // PRINT ALL ELEMENTS TO OUT
+        void print(std::ostream& out){
+            // MODIFY PRECISION
+            std::streamsize tp = out.precision(5);
+            out << '(' << v_data[0] << ", " << v_data[1] << ", " << v_data[2] << ')' << std::endl;
+            // RESTORE PRECISION
+            out.precision(tp);
         }
 
         ///////////////
@@ -102,12 +115,12 @@ namespace core
                               v_data[1] + o.v_data[1],
                               v_data[2] + o.v_data[2]);
         }
-        vector<T>& operator+=(const point<T>& o)
+        point<T>& operator+=(const point<T>& o)
         {
             v_data[0] += o.v_data[0];
             v_data[1] += o.v_data[1];
             v_data[2] += o.v_data[2];
-            return *this
+            return *this;
         }
         point<T> operator+(const T& o) const
         {
@@ -135,12 +148,12 @@ namespace core
                               v_data[1] - o.v_data[1],
                               v_data[2] - o.v_data[2]);
         }
-        vector<T>& operator-=(const point<T>& o)
+        point<T>& operator-=(const point<T>& o)
         {
             v_data[0] -= o.v_data[0];
             v_data[1] -= o.v_data[1];
             v_data[2] -= o.v_data[2];
-            return *this
+            return *this;
         }
         point<T> operator-(const T& o) const
         {
@@ -162,12 +175,12 @@ namespace core
                               v_data[1] * o.v_data[1],
                               v_data[2] * o.v_data[2]);
         }
-        vector<T>& operator*=(const point<T>& o)
+        point<T>& operator*=(const point<T>& o)
         {
             v_data[0] *= o.v_data[0];
             v_data[1] *= o.v_data[1];
             v_data[2] *= o.v_data[2];
-            return *this
+            return *this;
         }
         point<T> operator*(const T& o) const
         {
@@ -189,12 +202,12 @@ namespace core
                               v_data[1] / o.v_data[1],
                               v_data[2] / o.v_data[2]);
         }
-        vector<T>& operator/=(const point<T>& o)
+        point<T>& operator/=(const point<T>& o)
         {
             v_data[0] /= o.v_data[0];
             v_data[1] /= o.v_data[1];
             v_data[2] /= o.v_data[2];
-            return *this
+            return *this;
         }
         point<T> operator/(const T& o) const
         {
@@ -220,30 +233,35 @@ namespace core
     //////////////////////////
 
     // VECTOR3 + VECTOR3 = VECTOR3
-    vector3<T> operator+(const vector3& v1, const vector3<T>& v2)
+    template<class T>
+    vector3<T> operator+(const vector3<T>& v1, const vector3<T>& v2)
     {
         return vector3<T>(v1[0] + v2[0], v1[1] + v2[1], v1[2] + v2[2]);
     }
 
     // VECTOR3 - VECTOR3 = VECTOR3
+    template<class T>
     vector3<T> operator-(const vector3<T>& v1, const vector3<T>& v2)
     {
         return vector3<T>(v1[0] - v2[0], v1[1] - v2[1], v1[2] - v2[2]);
     }
 
     // POINT + VECTOR3 = POINT
+    template<class T>
     point<T> operator+(const point<T>& p, const vector3<T>& v)
     {
-        return point(p[0] + v[0], p[1] + v[1], p[2] + v[2]);
+        return point<T>(p[0] + v[0], p[1] + v[1], p[2] + v[2]);
     }
 
     // POINT - VECTOR3 = POINT
+    template<class T>
     point<T> operator-(const point<T>& p, const vector3<T>& v)
     {
-        return point(p[0] - v[0], p[1] - v[1], p[2] - v[2]);
+        return point<T>(p[0] - v[0], p[1] - v[1], p[2] - v[2]);
     }
 
     // POINT - POINT = VECTOR3
+    template<class T>
     vector3<T> operator-(const point<T>& p1, const point<T>& p2)
     {
         return vector3<T>(p1[0] - p2[0], p1[1] - p2[1], p1[2] - p2[2]);

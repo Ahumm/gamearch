@@ -1,27 +1,28 @@
 #include <iostream>
 //#include <array>
-#include "vector.h"
-#include "matrix.h"
+#include "vector3.h"
+#include "point.h"
+#include "matrix4.h"
 
 using namespace std;
 
 class Cube{
  public:
-  mvp::Matrix4 transform;
-  mvp::Point verts[8];
+    mvp::matrix4<float> transform;
+    mvp::point<float> verts[8];
 
-  Cube(){ reset(); }
+    Cube(){ reset(); }
 
-  void reset(){
-    verts[0].set( 1, 1, 1);
-    verts[1].set( 1, 1,-1);
-    verts[2].set( 1,-1, 1);
-    verts[3].set( 1,-1,-1);
-    verts[4].set(-1, 1, 1);
-    verts[5].set(-1, 1,-1);
-    verts[6].set(-1,-1, 1);
-    verts[7].set(-1,-1,-1);
-    transform.reset();
+    void reset(){
+        verts[0].set( 1, 1, 1);
+        verts[1].set( 1, 1,-1);
+        verts[2].set( 1,-1, 1);
+        verts[3].set( 1,-1,-1);
+        verts[4].set(-1, 1, 1);
+        verts[5].set(-1, 1,-1);
+        verts[6].set(-1,-1, 1);
+        verts[7].set(-1,-1,-1);
+        transform.reset();
   }
 
   void print(ostream& out, int tabs = 0){
@@ -29,10 +30,9 @@ class Cube{
     out << t << "Transformation Matrix:\n";
     transform.print(out, t+'\t');
     out << t << "Verticies:\n";
-    for(int i = 0; i < 8; ++i){
+    for(size_t i = 0; i < 8; ++i){
       out<< t+'\t' << "V" << i << ": ";
-      (transform * verts[i]).print(out,3);
-      out << endl;
+      (transform * verts[i]).print(out);
     }
   }
 };
@@ -97,7 +97,7 @@ int main(){
     }
     else if(input == "translateXYZ-V"){
       cin >> i[0] >> i[1] >> i[2];
-      c.transform.translateXYZ(mvp::Vector3(i[0],i[1],i[2]));
+      c.transform.translateXYZ(mvp::vector3<float>(i[0],i[1],i[2]));
     }
     else if(input == "rotateHPR"){
       cin >> i[0] >> i[1] >> i[2];
