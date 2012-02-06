@@ -6,6 +6,7 @@ Homework 2 - Vector & Matrix, Cube Transformation
         To build:
            $ cmake .
            $ make
-           Ought to produce a hw1 binary in ./bin/ simply run that to get to the prompt. input is function name followed by any arguements separated by a space. help lists all available functions.
+           Ought to produce a hw2 binary in ./bin/ simply run that to get to the prompt. input is function name followed by any arguements separated by a space. help lists all available functions.
 
-           If some of what I did seems strange, I was using some stuff specific to C++0x/C++11 (namely std::array and std::initializer_list) but decided to switch back to a more widely supported standard
+Homework 3 - Quaternions / SQT
+    Compiling is the same as Homework 2, ought to produce hw3 binary in addition to the hw2 one in ./bin/ prompt is identical in function to that of hw2.
