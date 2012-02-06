@@ -20,7 +20,7 @@ namespace mvp
         // COPY CONSTRUCTION
         quaternion(const quaternion& q)
         {
-            q_x = q.q_q;
+            q_x = q.q_x;
             q_y = q.q_y;
             q_z = q.q_z;
             q_w = q.q_w;
