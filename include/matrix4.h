@@ -11,6 +11,11 @@ namespace mvp
     class matrix4
     {
     public:
+        
+        //////////////////
+        // CONSTRUCTORS //
+        //////////////////
+        
         matrix4()
         {
             for(size_t r = 0; r < 4; ++r)
@@ -36,7 +41,8 @@ namespace mvp
         ///////////
 
         // PRINT MATRIX TO OUT (| BORDER)
-        void print(std::ostream& out){
+        void print(std::ostream& out) const
+        {
             // MODIFY PRECISION
             std::streamsize tp = out.precision(5);
             for(int r = 0; r < 4; ++r){
@@ -52,7 +58,8 @@ namespace mvp
         }
 
         // PRINT MATRIX TO OUT (| BORDER), LINE PRE-FIX S
-        void print(std::ostream& out, std::string s){
+        void print(std::ostream& out, std::string s) const
+        {
             // MODIFY PRECISION
             std::streamsize tp = out.precision(5);
             for(int r = 0; r < 4; ++r){
@@ -67,8 +74,16 @@ namespace mvp
             out.precision(tp);
         }
 
+        ///////////////
+        // ACCESSORS //
+        ///////////////
+
         T& at(const size_t c, const size_t r) { return m_data[4 * r + c]; }
         const T& at(const size_t c, const size_t r) const { return m_data[4 * r + c]; }
+
+        ///////////////
+        // OPERATORS //
+        ///////////////
 
         matrix4<T>& operator=(const matrix4<T>& o)
         {
@@ -122,6 +137,10 @@ namespace mvp
             tmp[3] = o.at(0) * at(0,3) + o.at(1) * at(1,3) + o.at(2) * at(2,3) + T(1) * at(3,3);
             return tmp;
         }
+
+        /////////////////////
+        // TRANSFORMATIONS //
+        /////////////////////
 
         // ADD TRANSLATE ALONG X
         void translateX(const T& nx){
@@ -232,6 +251,7 @@ namespace mvp
             scale(s);
         }
 
+        // RESET TO IDENTITY MATRIX
         void reset()
         {
             for(size_t r = 0; r < 4; ++r)
@@ -246,6 +266,7 @@ namespace mvp
         T m_data[16];
     };
     
+    // MULTIPLICATION OF TWO MATRICIES
     template<class T>
     matrix4<T> operator*(const matrix4<T>& m, const matrix4<T>& o)
     {
