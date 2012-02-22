@@ -4,6 +4,7 @@
 #include "vec3.h"
 #include "vec2.h"
 #include "vec4.h"
+#include "mat4.h"
 #include <string>
 #include <vector>
 #include <fstream>
@@ -21,6 +22,10 @@ namespace mvp {
             load_model(path);
             cout << "Verts: " << verticies.size() << endl;
             cout << "Polys: " << polygons.size() << endl;
+            cout << "vec2 Size: " << sizeof(vec2) << endl;
+            cout << "vec3 Size: " << sizeof(vec3) << endl;
+            cout << "vec4 Size: " << sizeof(vec4) << endl;
+            cout << "mat4 Size: " << sizeof(mat4) << endl;
         }
         
         vector<mvp::vec3> verticies;
