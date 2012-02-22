@@ -66,7 +66,7 @@ namespace mvp {
                     
                     file >> posx >> posy >> posz >> tmp >> tmp >> normx >> normy >> normz >> tmp >> tmp >> tmp >> u >> v;
                     cout << cmd << ": " << posx << " , " << posy << " , " << posz << endl;
-                    verticies.push_back(vec3(posx,posy,posz));
+                    verticies.push_back(vec3(posx,posy,posz));s
                     normals.push_back(vec3(normx,normy,normz));
                     uvs.push_back(vec2(u,v));
                 }
@@ -81,9 +81,6 @@ namespace mvp {
                     polygons.push_back(c);
                     cout << cmd << ": " << a << " , " << b << " , " << c << endl;
                 }
-                
-                    
-                
             }
             file.close();
         }
