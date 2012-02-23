@@ -8,6 +8,10 @@
 
 namespace mvp
 {
+    #ifndef PI
+        #define PI 3.14159265
+    #endif
+    
     class mat4
     {
     public:
@@ -74,6 +78,23 @@ namespace mvp
             out.precision(tp);
         }
 
+        ///////////////
+        // TRANSPOSE //
+        ///////////////
+        
+        mat4 transposed()
+        {
+            mat4 ret;
+            for(size_t i = 0; i < 4; ++i)
+            {
+                for(size_t j = 0; j < 4; ++j)
+                {
+                    ret.m_data[4 * i + j] = m_data[4 * j + i];
+                }
+            }
+            return ret;
+        }
+        
         ///////////////
         // ACCESSORS //
         ///////////////
@@ -257,7 +278,6 @@ namespace mvp
                         m_data[4 * r + c] = 0.0f;
         }
 
-    private:
         float m_data[16];
     };
     
@@ -266,6 +286,40 @@ namespace mvp
     {
         mat4 tmp = o;
         return tmp *= m;
+    }
+    
+    mat4 perspective(const float& fov, const float& aspect, const float& near, const float& far)
+    {
+        mat4 ret;
+        // Convert to radians
+        float fov_rad = fov * (PI / 180.0f);
+        float d = 1 / tan(fov_rad / 2);
+        ret.at(0,0) = d / aspect;
+        ret.at(1,1) = d;
+        ret.at(2,2) = (near + far) / (near - far);
+        ret.at(3,2) = (2 * near * far) / (near - far);
+        ret.at(2,3) = -1.0f;
+        ret.at(3,3) = 0.0f;
+        return ret;
+    }
+    
+    mat4 lookat(const vec3& pos, const vec3& tar, const vec3& world_up)
+    {
+        mat4 E;
+        E.at(3,0) = -pos[0];
+        E.at(3,1) = -pos[1];
+        E.at(3,2) = -pos[2];
+        
+        vec3 forward = (tar - pos).normalized();
+        vec3 right = forward.cross(world_up.normalized()).normalized();
+        vec3 up = right.cross(forward).normalized();
+        
+        float r[16] = { right[0], up[0], -forward[0], 0.0f,
+                        right[1], up[1], -forward[1], 0.0f,
+                        right[2], up[2], -forward[2], 0.0f,
+                        0.0f,0.0f,0.0f,1.0f };
+        mat4 R(r);
+        return (R.transposed() * E);
     }
 }
 

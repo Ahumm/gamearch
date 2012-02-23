@@ -1,10 +1,6 @@
 #ifndef _EGG_MODEL_H_
 #define _EGG_MODEL_H_
 
-#include "vec3.h"
-#include "vec2.h"
-#include "vec4.h"
-#include "mat4.h"
 #include <string>
 #include <vector>
 #include <fstream>
@@ -14,9 +10,9 @@ using namespace std;
 
 namespace mvp {
     typedef struct {
-        vec4 position;
-        vec2 uv;
-        vec4 normal;
+        float position[4];
+        float uv[2];
+        //vec4 normal;
     } vert;
     
     class egg_model
@@ -31,20 +27,11 @@ namespace mvp {
         {
             texture = "";
             load_model(path);
-            cout << "Verts: " << verticies.size() << endl;
-            cout << "Polys: " << polygons.size() << endl;
-            cout << "vec2 Size: " << sizeof(vec2) << endl;
-            cout << "vec3 Size: " << sizeof(vec3) << endl;
-            cout << "vec4 Size: " << sizeof(vec4) << endl;
-            cout << "mat4 Size: " << sizeof(mat4) << endl;
         }
         
         ~egg_model(){}
         
         vector<vert> vertices;
-        //vector<mvp::vec3> verticies;
-        //vector<mvp::vec3> normals;
-        //vector<mvp::vec2> uvs;
         vector<int> polygons;
         string texture;
         
@@ -72,18 +59,19 @@ namespace mvp {
                 {
                     getline(file,line);
                     size_t s = line.find("\""), e = line.rfind("\"");
-                    cout << cmd << ": " << line.substr(s+1,e-s-1) << endl;
+                    texture = line.substr(s+1,e-s-1);
+                    //cout << cmd << ": " << line.substr(s+1,e-s-1) << endl;
                 }
                 if(cmd == "<Vertex>")
                 {
                     float posx,posy,posz, normx,normy,normz, u,v;
                     
                     file >> posx >> posy >> posz >> tmp >> tmp >> normx >> normy >> normz >> tmp >> tmp >> tmp >> u >> v;
-                    cout << cmd << ": " << posx << " , " << posy << " , " << posz << endl;
-                    vert tmp_vertex;
-                    tmp_vertex.position = vec4(posx,posy,posz,1.0f);
-                    tmp_vertex.uv = vec2(u,v);
-                    tmp_vertex.normal = vec4(normx,normy,normz,0.0f);
+                    //cout << cmd << ": " << posx << " , " << posy << " , " << posz << endl;
+                    vert tmp_vertex = {posx,posy,posz,u,v};
+                    //tmp_vertex.position = vec4(posx,posy,posz,1.0f);
+                    //tmp_vertex.uv = vec2(u,v);
+                    //tmp_vertex.normal = vec4(normx,normy,normz,0.0f);
                     vertices.push_back(tmp_vertex);
                     //verticies.push_back(vec3(posx,posy,posz));
                     //normals.push_back(vec3(normx,normy,normz));
@@ -95,10 +83,10 @@ namespace mvp {
                     getline(file,line);
                     getline(file,line);
                     file >> tmp >> tmp >> a >> b >> c;
-                    polygons.push_back(a);
-                    polygons.push_back(b);
-                    polygons.push_back(c);
-                    cout << cmd << ": " << a << " , " << b << " , " << c << endl;
+                    polygons.push_back(a-1);
+                    polygons.push_back(b-1);
+                    polygons.push_back(c-1);
+                    //cout << cmd << ": " << a << " , " << b << " , " << c << endl;
                 }
             }
             file.close();

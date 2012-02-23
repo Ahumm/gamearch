@@ -4,25 +4,35 @@
 #include <GL/glew.h>
 #include <SFML/Window.hpp>
 #include <SFML/OpenGL.hpp>
+#include <SFML/Graphics/Image.hpp>
 #include "egg_model.h"
-#include "vec2.h"
-#include "vec3.h"
-#include "vec4.h"
-#include "mat4.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+//#include "vec2.h"
+//#include "vec3.h"
+//#include "vec4.h"
+//#include "mat4.h"
 #include <iostream>
+#include "morph.h"
+
+#define TEST 0
 
 int CurrentWidth = 800,
 	CurrentHeight = 450,
 	WindowHandle = 0;
-double thistime, oldtime, dt, starttime; //not floats!
+double new_tick, last_tick, d_tick, starttime; //not floats!
+
+bool exiting = false;
+sf::Window* window = NULL;
 
 //FOV, aspect ratio, near, far
-//mvp::mat4 ProjectionMatrix = glm::perspective(60.0f, 16.0f / 9.0f, 0.1f, 100.f);
-mvp::mat4 ViewMatrix;// = glm::mat4(1.0f);
-mvp::mat4 ModelMatrix;// = glm::mat4(1.0f);
+glm::mat4 ProjectionMatrix = glm::perspective(60.0f, 16.0f / 9.0f, 0.1f, 100.f);
+glm::mat4 ViewMatrix = glm::mat4(1.0f);
+glm::mat4 ModelMatrix = glm::mat4(1.0f);
 
 unsigned FrameCount = 0;
-static const double PI = 3.14159265358979323846;
+//static const double PI = 3.14159265358979323846;
 
 GLuint
 	ProjectionMatrixUniformLocation,
@@ -32,14 +42,18 @@ GLuint
 	BufferIds[3] = { 0 },
 	ShaderIds[3] = { 0 },
     TexId,
-    VertCount;
+    VertCount,
+    PolyCount;
 	
 double LastTime = 0;
 
 void Initialize(int, char*[]);
 void InitWindow(void);
+void KeyboardFunction(sf::Event & event);
 void RenderFunction(void);
+void ResizeFunction(sf::Event & event);
 void CreatePanda(void);
+void TestPanda(void);
 void DrawPanda(void);
 void DestroyPanda(void);
 void game_loop(void);
@@ -47,6 +61,7 @@ void checkShader(GLuint);
 GLuint LoadShader(const char*, GLenum);
 void OnGLError(const char*);
 GLboolean LoadTexture( char* );
+void Cleanup();
 
 int main(int argc, char* argv[])
 {
@@ -56,20 +71,21 @@ int main(int argc, char* argv[])
     
     DestroyPanda();
 	
+    Cleanup();
+    
 	exit(EXIT_SUCCESS);
 }
 
 void Initialize(int argc, char* argv[])
 {
-	GLenum GlewInitResult;
-
 	InitWindow();
 	OnGLError("Init window");
 
+    GLenum GlewInitResult;
 	glewExperimental = GL_TRUE;
     GlewInitResult = glewInit();
     OnGLError("GLEW init");
-
+    
 	if (GLEW_OK != GlewInitResult) {
 		fprintf(
 			stderr,
@@ -79,7 +95,7 @@ void Initialize(int argc, char* argv[])
 		exit(EXIT_FAILURE);
 	}
 	OnGLError("GLEW string");
-	
+    
 	fprintf(
 		stdout,
 		"INFO: OpenGL Version: %s\n",
@@ -92,8 +108,8 @@ void Initialize(int argc, char* argv[])
 		"INFO: GLEW Version: %s\n",
 		glewGetString(GLEW_VERSION) 
 	);
-
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    
+	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 	OnGLError("Clear color");
 	glEnable(GL_DEPTH_TEST);
 	OnGLError("Depth test");
@@ -105,61 +121,85 @@ void Initialize(int argc, char* argv[])
 	OnGLError("Cull face");
 	glFrontFace(GL_CCW);
 	OnGLError("Front face");
-    //ViewMatrix = glm::lookAt(glm::vec3(0.0, 0.0, 4.0), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
-    //ViewMatrix = glm::translate(ViewMatrix, glm::vec3(0,0,-2));
-    
-    ////////////////////////////////////////////////////////////////////////
-    // DO MATH HERE
-    ////////////////////////////////////////////////////////////////////////
-    
+    ViewMatrix = glm::lookAt(glm::vec3(0.0, 0.0, 15.0), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
+
+    //ViewMatrix = mvp::lookat(mvp::vec3(0.0, 0.0, 15.0), mvp::vec3(0.0, 0.0, 0.0), mvp::vec3(0.0, 1.0, 0.0));
+
+#if TEST == 1
+    TestPanda();
+#else
     CreatePanda();
+#endif
 }
 
 void InitWindow(void)
 {
-	// Initialize GLFW
-    if( !glfwInit() )
+    window = new sf::Window(sf::VideoMode(CurrentWidth, CurrentHeight, 32), "");
+    window->SetActive();
+    window->Display();
+    window->SetFramerateLimit(60);
+}
+
+void KeyboardFunction(sf::Event & event)
+{
+    if (event.Type == sf::Event::KeyPressed)
     {
-        fprintf( stderr, "Failed to initialize GLFW\n" );
-        exit( EXIT_FAILURE );
+        switch(event.Key.Code)
+        {
+            case sf::Keyboard::Escape:
+                window->Close();
+                exiting = true;
+                break;
+            /*case sf::Keyboard::A:
+                ViewMatrix = glm::rotate(ViewMatrix, 10.0f*(float)d_tick/1000.0f);
+                break;
+            case sf::Keyboard::D:
+                ViewMatrix.rotateH(-10.0f*(float)d_tick/1000.0f);
+                break;
+            case sf::Keyboard::W:
+                ViewMatrix.rotateP(10.0f*(float)d_tick/1000.0f);
+                break;
+            case sf::Keyboard::S:
+                ViewMatrix.rotateP(-10.0f*(float)d_tick/1000.0f);
+                break;*/
+            default:
+                break;
+        }
     }
-    
-    glfwOpenWindowHint(GLFW_OPENGL_VERSION_MAJOR, 3);
-    glfwOpenWindowHint(GLFW_OPENGL_VERSION_MINOR, 0);
-    glfwOpenWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-	
-	if( !glfwOpenWindow( CurrentWidth, CurrentHeight, 0,0,0,0, 16,0, GLFW_WINDOW ) )
-    {
-        fprintf( stderr, "Failed to open GLFW window\n" );
-        glfwTerminate();
-        exit( EXIT_FAILURE );
-    }
-    
-    fprintf(stderr, "GLSL %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 }
 
 void game_loop(void){
-    int playing;
-    playing = GL_TRUE;
-    while( playing && glfwGetWindowParam( GLFW_OPENED ) )
+    sf::Clock clock;
+    last_tick = clock.GetElapsedTime().AsMilliseconds();
+    while(window->IsOpen())
     {
-        glfwEnable(GLFW_STICKY_KEYS);
-        // Frame timer
-        oldtime = thistime;
-        thistime = glfwGetTime();
-        dt = thistime - oldtime;
-        
-        //Key events
-        // Did the user press ESC?
-        if( glfwGetKey( GLFW_KEY_ESC ) )
+        new_tick = clock.GetElapsedTime().AsMilliseconds();
+        d_tick = new_tick - last_tick;
+        sf::Event event;
+        while(window->PollEvent(event))
         {
-            playing = GL_FALSE;
+            if (event.Type == sf::Event::Closed)
+            {
+                window->Close();
+                break;
+            }
+            else if(event.Type == sf::Event::KeyPressed)
+            {
+                KeyboardFunction(event);
+            }
+            else if(event.Type == sf::Event::Resized)
+            {
+                ResizeFunction(event);
+            }
         }
-       
+        if(exiting)
+            break;
+
         // Display
         RenderFunction();
-        glfwSwapBuffers();
-        glfwDisable(GLFW_STICKY_KEYS);
+        
+        window->Display();
+        last_tick = new_tick;
     }
 }
 
@@ -169,26 +209,42 @@ void RenderFunction(void)
     DrawPanda();
 }
 
-void CreateCube()
+void ResizeFunction(sf::Event & event)
+{
+    if (event.Type == sf::Event::Resized)
+    {
+        CurrentWidth = event.Size.Width;
+        CurrentHeight = event.Size.Height;
+        glViewport(0, 0, CurrentWidth, CurrentHeight);
+    }
+}
+
+void CreatePanda()
 {
     printf("Create\n");
-
-    const mvp::egg_model panda("panda_model.egg");
+    const mvp::egg_model panda("models/panda-model.egg");
+//ModelMatrix.scale(0.01);
 
     VertCount = panda.vertices.size();
-    
+    PolyCount = panda.polygons.size();
+
     ShaderIds[0] = glCreateProgram();
     printf("%d\n",ShaderIds[0]);
     OnGLError("ERROR: Could not create the shader program");
-	
-	ShaderIds[1] = LoadShader("panda.fs", GL_FRAGMENT_SHADER);
+
+	ShaderIds[1] = LoadShader("shaders/panda.fs", GL_FRAGMENT_SHADER);
     checkShader(ShaderIds[1]);
-	ShaderIds[2] = LoadShader("panda.vs", GL_VERTEX_SHADER);
+	ShaderIds[2] = LoadShader("shaders/panda.vs", GL_VERTEX_SHADER);
 	checkShader(ShaderIds[2]);
+
 	glAttachShader(ShaderIds[0], ShaderIds[1]);
 	glAttachShader(ShaderIds[0], ShaderIds[2]);
-	
+   
+    glBindAttribLocation(ShaderIds[0], 0, "in_Position");
+    glBindAttribLocation(ShaderIds[0], 1, "in_Tex");
+   
 	glLinkProgram(ShaderIds[0]);
+    glUseProgram(ShaderIds[0]);
     OnGLError("ERROR: Could not link the shader program");
 
     ModelMatrixUniformLocation = glGetUniformLocation(ShaderIds[0], "ModelMatrix");
@@ -203,42 +259,134 @@ void CreateCube()
 	glBindVertexArray(BufferIds[0]);
     OnGLError("ERROR: Could not bind the VAO");
 
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-    OnGLError("ERROR: Could not enable vertex attributes");
-
 	glGenBuffers(2, &BufferIds[1]);
     OnGLError("ERROR: Could not generate the buffer objects");
 
 	glBindBuffer(GL_ARRAY_BUFFER, BufferIds[1]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(panda.vertices[0]), &panda.vertices[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(panda.vertices[0])*VertCount, &(panda.vertices[0]), GL_STATIC_DRAW);
     OnGLError("ERROR: Could not bind the VBO to the VAO");
 
 	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(panda.vertices[0]), (GLvoid*)0);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(panda.vertices[0]), (GLvoid*)sizeof(panda.vertices[0].position));
     OnGLError("ERROR: Could not set VAO attributes");
+    
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+    OnGLError("ERROR: Could not enable vertex attributes");
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, BufferIds[2]);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(panda.polygons[0]), &panda.polygons[0], GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(panda.polygons[0])*PolyCount, &(panda.polygons[0]), GL_STATIC_DRAW);
     OnGLError("ERROR: Could not bind the IBO to the VAO");
 
 	glBindVertexArray(0);
 	
+    // Load Texture
+    ///sf::Image img;
+    ///if(!img.LoadFromFile("textures/" + panda.texture))
+    ///{
+    ///    fprintf( stderr, "Failed to load texture" );
+    ///    throw 1;
+    ///}
+
+    // Generate texture objects
+    ///glGenTextures( 1, &TexId );
+
+    // Make texture object active
+    ///glBindTexture( GL_TEXTURE_2D, TexId );
+    
+    // Set texture parameters
+    ///glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+    ///glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+    ///glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+    ///glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+
+    ///glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.GetWidth(), img.GetHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, img.GetPixelsPtr());
+    
+    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 2048, 1536, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels?);
+    ///samplerLoc = glGetUniformLocation(ShaderIds[0], "s_tex");
+    //glActiveTexture(GL_TEXTURE0);
+    ///glUniform1i(samplerLoc, 0);
+}
+
+void TestPanda()
+{
+    printf("Create\n");
+PolyCount = 5412;
+VertCount = 1339;
+    ShaderIds[0] = glCreateProgram();
+    printf("%d\n",ShaderIds[0]);
+    OnGLError("ERROR: Could not create the shader program");
+
+	ShaderIds[1] = LoadShader("shaders/panda.fs", GL_FRAGMENT_SHADER);
+    checkShader(ShaderIds[1]);
+	ShaderIds[2] = LoadShader("shaders/panda.vs", GL_VERTEX_SHADER);
+	checkShader(ShaderIds[2]);
+
+	glAttachShader(ShaderIds[0], ShaderIds[1]);
+	glAttachShader(ShaderIds[0], ShaderIds[2]);
+    
+    glBindAttribLocation(ShaderIds[0], 0, "in_Position");
+    glBindAttribLocation(ShaderIds[0], 1, "in_Tex");
+
+	glLinkProgram(ShaderIds[0]);
+    glUseProgram(ShaderIds[0]);
+    OnGLError("ERROR: Could not link the shader program");
+
+    ModelMatrixUniformLocation = glGetUniformLocation(ShaderIds[0], "ModelMatrix");
+    OnGLError("ERROR: Could not get Model uniform locations");
+    ViewMatrixUniformLocation = glGetUniformLocation(ShaderIds[0], "ViewMatrix");
+    OnGLError("ERROR: Could not get View uniform locations");
+    ProjectionMatrixUniformLocation = glGetUniformLocation(ShaderIds[0], "ProjectionMatrix");
+    OnGLError("ERROR: Could not get Projection uniform locations");
+
+	glGenVertexArrays(1, &BufferIds[0]);
+    OnGLError("ERROR: Could not generate the VAO");
+	glBindVertexArray(BufferIds[0]);
+    OnGLError("ERROR: Could not bind the VAO");
+
+    glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+    OnGLError("ERROR: Could not enable vertex attributes");
+    
+	glGenBuffers(2, &BufferIds[1]);
+    OnGLError("ERROR: Could not generate the buffer objects");
+
+	glBindBuffer(GL_ARRAY_BUFFER, BufferIds[1]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(VERTICES), VERTICES, GL_STATIC_DRAW);
+    OnGLError("ERROR: Could not bind the VBO to the VAO");
+
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(VERTICES[0]), (GLvoid*)0);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(VERTICES[0]), (GLvoid*)sizeof(VERTICES[0].Position));
+    OnGLError("ERROR: Could not set VAO attributes");
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, BufferIds[2]);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(INDICES), INDICES, GL_STATIC_DRAW);
+    OnGLError("ERROR: Could not bind the IBO to the VAO");
+
+	glBindVertexArray(0);
+
+    // Load Texture
+    sf::Image img;
+    if(!img.LoadFromFile("panda-model.png"))
+    {
+        fprintf( stderr, "Failed to load texture" );
+        throw 1;
+    }
+
     // Generate texture objects
     glGenTextures( 1, &TexId );
 
     // Make texture object active
     glBindTexture( GL_TEXTURE_2D, TexId );
 
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.GetWidth(), img.GetHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, img.GetPixelsPtr());
+    
     // Set texture parameters
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 
-    // Upload texture from file to texture memory, autouses glTexImage2D, needs TGA
-    if( !glfwLoadTexture2D( panda.texture, 0 ) )
-        fprintf( stderr, "Failed to load texture" );
     //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 2048, 1536, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels?);
     samplerLoc = glGetUniformLocation(ShaderIds[0], "s_tex");
     //glActiveTexture(GL_TEXTURE0);
@@ -261,36 +409,21 @@ void DestroyPanda()
 
 void DrawPanda(void)
 {
-	float CubeAngle;
-	double Now = glfwGetTime();
-
-	if (LastTime == 0)
-		LastTime = Now;
-
-	CubeRotation += 450.0f * ((float)(Now - LastTime));
-    //fprintf(stderr, "Now: %f, Last: %f, CR: %f\n",Now,LastTime, (45.0f * ((float)(Now - LastTime) / CLOCKS_PER_SEC)));
-	CubeAngle = CubeRotation * (float)(PI / 180); //radians
-    //fprintf(stderr, "cube angle: %f\n",CubeAngle);
-	LastTime = Now;
-
-	ModelMatrix = mvp::mat4;
-    ModelMatrix.rotateHPR(CubeAngle,CubeAngle,0.0f);
-    //ModelMatrix = glm::rotate(ModelMatrix, CubeAngle, glm::vec3(0, 1, 0)); //rotateH
-    //ModelMatrix = glm::rotate(ModelMatrix, CubeAngle, glm::vec3(1, 0, 0)); //rotateP
-    
 	glUseProgram(ShaderIds[0]);
     OnGLError("DRAW_ERROR: Could not use the shader program");
-
-	glUniformMatrix4fv(ModelMatrixUniformLocation, 1, GL_FALSE, ModelMatrix.value_ptr());
-	glUniformMatrix4fv(ViewMatrixUniformLocation, 1, GL_FALSE, ViewMatrix.value_ptr());
-	glUniformMatrix4fv(ProjectionMatrixUniformLocation, 1, GL_FALSE, ProjectionMatrix.value_ptr());
+    
+	glUniformMatrix4fv(ModelMatrixUniformLocation, 1, GL_FALSE, glm::value_ptr(ModelMatrix));
+	glUniformMatrix4fv(ViewMatrixUniformLocation, 1, GL_FALSE, glm::value_ptr(ViewMatrix));
+	glUniformMatrix4fv(ProjectionMatrixUniformLocation, 1, GL_FALSE, glm::value_ptr(ProjectionMatrix));
     OnGLError("ERROR: Could not set the shader uniforms");
-
+    
+    ///glBindTexture(GL_TEXTURE_2D, TexId);
+    
 	glBindVertexArray(BufferIds[0]);
     OnGLError("ERROR: Could not bind the VAO for drawing purposes");
 
-	glDrawElements(GL_TRIANGLES, VertCount, GL_UNSIGNED_INT, (GLvoid*)0);
-	OnGLError("ERROR: Could not draw the cube");
+	glDrawElements(GL_TRIANGLES, PolyCount, GL_UNSIGNED_INT, (GLvoid*)0);
+	OnGLError("ERROR: Could not draw the panda");
 
 	glBindVertexArray(0);
 	glUseProgram(0);
@@ -357,7 +490,9 @@ GLuint LoadShader(const char* filename, GLenum shader_type)
 		fclose(file);
 	}
 	else
+    {
 		fprintf(stderr, "ERROR: Could not open file %s\n", filename);
+    }
 
 	return shader_id;
 }
@@ -365,7 +500,7 @@ GLuint LoadShader(const char* filename, GLenum shader_type)
 void OnGLError(const char* error_message)
 {
 	const GLenum ErrorValue = glGetError();
-
+    
 	if (ErrorValue != GL_NO_ERROR)
 	{
 		const char* APPEND_DETAIL_STRING = ": %s\n";
@@ -376,8 +511,13 @@ void OnGLError(const char* error_message)
 		memcpy(display_message, error_message, message_length);
 		memcpy(&display_message[message_length], APPEND_DETAIL_STRING, APPEND_LENGTH);
 
-		fprintf(stderr, display_message, gluErrorString(ErrorValue));
+		fprintf(stderr, display_message, ErrorValue);
 
 		free(display_message);
-	}
+	} 
+}
+
+void Cleanup()
+{
+    delete window;
 }
