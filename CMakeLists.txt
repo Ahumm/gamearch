@@ -13,4 +13,27 @@ include_directories(${GAMEARCH_SOURCE_DIR}/include)
 #set(CMAKE_CXX_FLAGS "-g -std=c++0x")
 #add_definitions("-g -std=c++0x")
 add_definitions("-g")
-add_subdirectory(src)
+#add_subdirectory(src)
+
+set(EXECUTABLE_NAME "hw5")
+
+add_executable(hw5 WIN32 MACOSX_BUNDLE src/hw5.cpp)
+
+# Detect and add SFML
+set(SFMLDIR "C:/MinGW/")
+find_package(SFML 2 REQUIRED system window graphics network audio)
+target_link_libraries(${EXECUTABLE_NAME} ${SFML_LIBRARIES})
+
+find_package(OpenGL REQUIRED)
+include_directories(${OPENGL_INCLUDE_DIR})
+TARGET_LINK_LIBRARIES(${EXECUTABLE_NAME} ${OPENGL_LIBRARIES})
+
+find_package(GLEW REQUIRED)
+include_directories(${GLEW_INCLUDE_PATH})
+target_link_libraries(${EXECUTABLE_NAME} ${GLEW_LIBRARY})
+#target_link_libraries(${EXECUTABLE_NAME} glew)
+#target_link_libraries(${EXECUTABLE_NAME} opengl32)
+
+find_package(GLFW REQUIRED)
+include_directories(${GLFW_INCLUDE_DIRS})
+

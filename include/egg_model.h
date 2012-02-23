@@ -13,14 +13,20 @@
 using namespace std;
 
 namespace mvp {
-    struct vertex {
+    typedef struct {
         vec4 position;
         vec2 uv;
         vec4 normal;
     } vert;
+    
     class egg_model
     {
     public:
+        egg_model()
+        {
+            texture = "";
+        }
+        
         egg_model(const char * path)
         {
             texture = "";
@@ -33,10 +39,12 @@ namespace mvp {
             cout << "mat4 Size: " << sizeof(mat4) << endl;
         }
         
+        ~egg_model(){}
+        
         vector<vert> vertices;
-        vector<mvp::vec3> verticies;
-        vector<mvp::vec3> normals;
-        vector<mvp::vec2> uvs;
+        //vector<mvp::vec3> verticies;
+        //vector<mvp::vec3> normals;
+        //vector<mvp::vec2> uvs;
         vector<int> polygons;
         string texture;
         
@@ -77,9 +85,9 @@ namespace mvp {
                     tmp_vertex.uv = vec2(u,v);
                     tmp_vertex.normal = vec4(normx,normy,normz,0.0f);
                     vertices.push_back(tmp_vertex);
-                    verticies.push_back(vec3(posx,posy,posz));s
-                    normals.push_back(vec3(normx,normy,normz));
-                    uvs.push_back(vec2(u,v));
+                    //verticies.push_back(vec3(posx,posy,posz));
+                    //normals.push_back(vec3(normx,normy,normz));
+                    //uvs.push_back(vec2(u,v));
                 }
                 if(cmd == "<Polygon>")
                 {
