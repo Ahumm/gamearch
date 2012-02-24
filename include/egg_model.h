@@ -12,7 +12,7 @@ namespace mvp {
     typedef struct {
         float position[4];
         float uv[2];
-        //vec4 normal;
+        float normal[4];
     } vert;
     
     class egg_model
@@ -68,7 +68,7 @@ namespace mvp {
                     
                     file >> posx >> posy >> posz >> tmp >> tmp >> normx >> normy >> normz >> tmp >> tmp >> tmp >> u >> v;
                     //cout << cmd << ": " << posx << " , " << posy << " , " << posz << endl;
-                    vert tmp_vertex = {posx,posy,posz,u,v};
+                    vert tmp_vertex = {posx,posy,posz,1.0f,u,v,normx,normy,normz,0.0f};
                     //tmp_vertex.position = vec4(posx,posy,posz,1.0f);
                     //tmp_vertex.uv = vec2(u,v);
                     //tmp_vertex.normal = vec4(normx,normy,normz,0.0f);
