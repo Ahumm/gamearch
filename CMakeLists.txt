@@ -20,17 +20,23 @@ set(EXECUTABLE_NAME "hw5-2")
 add_executable(${EXECUTABLE_NAME} WIN32 MACOSX_BUNDLE src/hw5-2.cpp)
 
 # Detect and add SFML
-set(SFMLDIR "C:/MinGW/")
+IF(WIN32)
+	set(SFMLDIR "C:/MinGW/")
+ENDIF()
 find_package(SFML 2 REQUIRED system window graphics network audio)
 target_link_libraries(${EXECUTABLE_NAME} ${SFML_LIBRARIES})
 
-#find_package(OpenGL REQUIRED)
-#include_directories(${OPENGL_INCLUDE_DIR})
-#TARGET_LINK_LIBRARIES(${EXECUTABLE_NAME} ${OPENGL_LIBRARIES})
+IF(WIN32)
+	target_link_libraries(${EXECUTABLE_NAME} opengl32)
+ELSE()
+	find_package(OpenGL REQUIRED)
+	include_directories(${OPENGL_INCLUDE_DIR})
+	TARGET_LINK_LIBRARIES(${EXECUTABLE_NAME} ${OPENGL_LIBRARIES})
+ENDIF()
 
 find_package(GLEW REQUIRED)
 include_directories(${GLEW_INCLUDE_PATH})
 target_link_libraries(${EXECUTABLE_NAME} ${GLEW_LIBRARY})
 #target_link_libraries(${EXECUTABLE_NAME} glew)
-target_link_libraries(${EXECUTABLE_NAME} opengl32)
+
 
