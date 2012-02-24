@@ -71,6 +71,8 @@ int main()
     destroy_panda();
     
     cleanup();
+    
+    exit(EXIT_SUCCESS);
 }
 
 void game_loop()
@@ -89,7 +91,7 @@ void game_loop()
             if(event.Type == sf::Event::Closed)
             {
                 window->Close();
-                break;
+                exiting = true;
             }
             else if(event.Type == sf::Event::KeyPressed)
             {
@@ -99,6 +101,8 @@ void game_loop()
             {
                 resize_function(event);
             }
+            if(exiting)
+                break;
         }
         if(exiting)
             break;

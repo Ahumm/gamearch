@@ -26,6 +26,12 @@ ENDIF()
 find_package(SFML 2 REQUIRED system window graphics network audio)
 target_link_libraries(${EXECUTABLE_NAME} ${SFML_LIBRARIES})
 
+
+find_package(GLEW REQUIRED)
+include_directories(${GLEW_INCLUDE_PATH})
+target_link_libraries(${EXECUTABLE_NAME} ${GLEW_LIBRARY})
+#target_link_libraries(${EXECUTABLE_NAME} glew)
+
 IF(WIN32)
 	target_link_libraries(${EXECUTABLE_NAME} opengl32)
 ELSE()
@@ -33,10 +39,4 @@ ELSE()
 	include_directories(${OPENGL_INCLUDE_DIR})
 	TARGET_LINK_LIBRARIES(${EXECUTABLE_NAME} ${OPENGL_LIBRARIES})
 ENDIF()
-
-find_package(GLEW REQUIRED)
-include_directories(${GLEW_INCLUDE_PATH})
-target_link_libraries(${EXECUTABLE_NAME} ${GLEW_LIBRARY})
-#target_link_libraries(${EXECUTABLE_NAME} glew)
-
 
