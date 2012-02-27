@@ -344,7 +344,8 @@ void draw_panda()
     // Set the vertex array as active
     glBindVertexArray(vert_arr);
     // Draw the triangles
-    glDrawElements(GL_TRIANGLES, poly_count, GL_UNSIGNED_INT, (GLvoid*)0);
+    //glDrawElements(GL_TRIANGLES, poly_count, GL_UNSIGNED_INT, (GLvoid*)0);
+    glDrawElements(GL_TRIANGLES, 5412, GL_UNSIGNED_INT, (GLvoid*)0);
 }
 
 void destroy_panda()
