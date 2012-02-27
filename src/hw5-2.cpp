@@ -10,6 +10,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
+#include "morph.h"
 
 #define PI 3.14159265
 
@@ -24,7 +25,7 @@ sf::Window* window = NULL;
 
 glm::mat4 projection_matrix = glm::perspective(60.0f, (float)window_width / (float)window_height, 0.1f, 100.f);
 glm::mat4 view_matrix = glm::mat4(1.0f);
-glm::mat4 model_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.01f,0.01f,0.01f));
+glm::mat4 model_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.0001f));
 
 GLuint
     projection_matrix_uniform_loc,
@@ -119,12 +120,29 @@ void game_loop()
 
 void keyboard_function(sf::Event& event)
 {
+    float rotation;
     switch(event.Key.Code)
     {
         //Exit on Escape
         case sf::Keyboard::Escape:
             window->Close();
             exiting = true;
+            break;
+        case sf::Keyboard::A:
+            rotation = 1;//450.0f * ((float)tick_diff);
+            model_matrix = glm::rotate(model_matrix, rotation, glm::vec3(0,1,0));
+            break;
+        case sf::Keyboard::D:
+            rotation = -1;//-450.0f * ((float)tick_diff);
+            model_matrix = glm::rotate(model_matrix, rotation, glm::vec3(0,1,0));
+            break;
+        case sf::Keyboard::W:
+            rotation = 1;//450.0f * ((float)tick_diff);
+            model_matrix = glm::rotate(model_matrix, rotation, glm::vec3(1,0,0));
+            break;
+        case sf::Keyboard::S:
+            rotation = -1;//-450.0f * ((float)tick_diff);
+            model_matrix = glm::rotate(model_matrix, rotation, glm::vec3(1,0,0));
             break;
         default:
             break;
@@ -295,18 +313,22 @@ void create_panda()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buf);
     
     // Set the VBO's data to the vertices
-    glBufferData(GL_ARRAY_BUFFER, vert_size * vert_count, &panda.vertices[0], GL_STATIC_DRAW);
+    //glBufferData(GL_ARRAY_BUFFER, vert_size * vert_count, &panda.vertices[0], GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(VERTICES), VERTICES, GL_STATIC_DRAW);
     
     // Set the VAO's data to the position and the vertex position and uv
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, vert_size, (GLvoid*)0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, vert_size, (GLvoid*)uv_offset);
+    //glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, vert_size, (GLvoid*)0);
+    //glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, vert_size, (GLvoid*)uv_offset);
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(VERTICES[0]), (GLvoid*)0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(VERTICES[0]), (GLvoid*)sizeof(VERTICES[0].Position));
     
     // Enable the vertex array's attributes
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     
     // Set the index buffer to the polygons
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, poly_size * poly_count, &panda.polygons[0], GL_STATIC_DRAW);
+    //glBufferData(GL_ELEMENT_ARRAY_BUFFER, poly_size * poly_count, &panda.polygons[0], GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(INDICES), INDICES, GL_STATIC_DRAW);
     
     // Load the texture
     texture_id = load_texture("textures/" + panda.texture);
