@@ -31,6 +31,8 @@ glm::mat4 ModelMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.01f));
 unsigned FrameCount = 0;
 static const double PI = 3.14159265358979323846;
 
+int used_program = 0;
+
 GLuint
 	ProjectionMatrixUniformLocation,
 	ViewMatrixUniformLocation,
@@ -38,7 +40,7 @@ GLuint
     TimeLocation,
 	samplerLoc,
 	BufferIds[3] = { 0 },
-	ShaderIds[3] = { 0 },
+	ShaderIds[6] = { 0 },
     TexId,
     poly_count,
     vert_count,
@@ -46,6 +48,36 @@ GLuint
     vert_size,
     uv_offset,
     norm_offset;
+    
+// FOR UBERLIGHT
+GLuint
+    ul_time_loc,
+    ul_vm_loc,
+    ul_mm_loc,
+    ul_pm_loc,
+    wclightpos_loc,
+    viewposition_loc,
+    wctolc_loc,
+    wctolcit_loc,
+    mctowc_loc,
+    mctowcit_loc,
+    surfacecolor_loc,
+    lightcolor_loc,
+    lightweights_loc,
+    surfaceweights_loc,
+    surfaceroughness_loc,
+    ambientclamping_loc,
+    barnshaping_loc,
+    sewidth_loc,
+    seheight_loc,
+    sewidthedge_loc,
+    seheightedge_loc,
+    seroundness_loc,
+    dsnear_loc,
+    dsfar_loc,
+    dsnearedge_loc,
+    dsfaredge_loc;
+    
 	
 float PandaRotation = 0;
 double LastTime = 0;
@@ -166,6 +198,10 @@ void game_loop(void){
                     window->Close();
                     exiting = true;
                 }
+                if(event.Key.Code == sf::Keyboard::S)
+                {
+                    used_program = (used_program == 0) ? 3 : 0;
+                }
             }
             if(exiting)
                 break;
@@ -203,6 +239,7 @@ void CreatePanda()
     
     fprintf(stdout, "is: %u\nfs: %u\nvc: %u\npc: %u\nvs: %u\nuvo: %u\nno: %u\nps: %u\n", sizeof(int),sizeof(float),vert_count, poly_count, vert_size, uv_offset, norm_offset, poly_size);
     
+    // NORMAL SHADERS
     ShaderIds[0] = glCreateProgram();
     printf("%d\n",ShaderIds[0]);
     OnGLError("ERROR: Could not create the shader program");
@@ -233,7 +270,64 @@ void CreatePanda()
     OnGLError("ERROR: Could not get View uniform locations");
     ProjectionMatrixUniformLocation = glGetUniformLocation(ShaderIds[0], "ProjectionMatrix");
     OnGLError("ERROR: Could not get Projection uniform locations");
-    //TimeLocation = glGetUniformLocation(ShaderIds[0], "time");
+    
+    // END NORMAL SHADER
+    // UBERLIGHT SHADERS
+    
+    ShaderIds[3] = glCreateProgram();
+    printf("%d\n",ShaderIds[3]);
+    OnGLError("ERROR: Could not create the shader program");
+	
+	ShaderIds[4] = LoadShader("shaders/uberlight.fs.bak", GL_FRAGMENT_SHADER);
+    checkShader(ShaderIds[4]);
+	ShaderIds[5] = LoadShader("shaders/uberlight.vs.bak", GL_VERTEX_SHADER);
+	checkShader(ShaderIds[5]);
+	glAttachShader(ShaderIds[3], ShaderIds[4]);
+	glAttachShader(ShaderIds[3], ShaderIds[5]);
+	
+    //if not using "location" in shader
+	glBindAttribLocation(ShaderIds[3], 0, "in_Position");
+	glBindAttribLocation(ShaderIds[3], 1, "in_Tex");
+    glBindAttribLocation(ShaderIds[3], 2, "in_Normal");
+	
+	glLinkProgram(ShaderIds[3]);
+    OnGLError("ERROR: Could not link the shader program");
+
+    //glUseProgram(ShaderIds[3]);
+    OnGLError("ERROR: Could use shader program (Create)");
+    
+    ul_time_loc = glGetUniformLocation(ShaderIds[3], "time");
+    OnGLError("ERROR: Could not get time uniform locations");
+    ul_mm_loc = glGetUniformLocation(ShaderIds[3], "ModelMatrix");
+    OnGLError("ERROR: Could not get Model uniform locations");
+    ul_vm_loc = glGetUniformLocation(ShaderIds[3], "ViewMatrix");
+    OnGLError("ERROR: Could not get View uniform locations");
+    ul_pm_loc = glGetUniformLocation(ShaderIds[3], "ProjectionMatrix");
+    OnGLError("ERROR: Could not get Projection uniform locations");
+    wclightpos_loc = glGetUniformLocation(ShaderIds[3], "WCLightPos");
+    viewposition_loc = glGetUniformLocation(ShaderIds[3], "ViewPosition");
+    wctolc_loc = glGetUniformLocation(ShaderIds[3], "WCtoLC");
+    wctolcit_loc = glGetUniformLocation(ShaderIds[3], "WCtoLCit");
+    mctowc_loc = glGetUniformLocation(ShaderIds[3], "MCtoWC");
+    mctowcit_loc = glGetUniformLocation(ShaderIds[3], "MCtoWCit");
+    surfacecolor_loc = glGetUniformLocation(ShaderIds[3], "SurfaceColor");
+    lightcolor_loc = glGetUniformLocation(ShaderIds[3], "LightColor");
+    lightweights_loc = glGetUniformLocation(ShaderIds[3], "LightWeights");
+    surfaceweights_loc = glGetUniformLocation(ShaderIds[3], "SurfaceWeights");
+    surfaceroughness_loc = glGetUniformLocation(ShaderIds[3], "SurfaceRoughness");
+    ambientclamping_loc = glGetUniformLocation(ShaderIds[3], "AmbientClamping");
+    barnshaping_loc = glGetUniformLocation(ShaderIds[3], "BarnShaping");
+    sewidth_loc = glGetUniformLocation(ShaderIds[3], "SeWidth");
+    seheight_loc = glGetUniformLocation(ShaderIds[3], "SeHeight");
+    sewidthedge_loc = glGetUniformLocation(ShaderIds[3], "SeWidthEdge");
+    seheightedge_loc = glGetUniformLocation(ShaderIds[3], "SeHeightEdge");
+    seroundness_loc = glGetUniformLocation(ShaderIds[3], "SeRoundness");
+    dsnear_loc = glGetUniformLocation(ShaderIds[3], "DsNear");
+    dsfar_loc = glGetUniformLocation(ShaderIds[3], "DsFar");
+    dsnearedge_loc = glGetUniformLocation(ShaderIds[3], "DsNearEdge");
+    dsfaredge_loc = glGetUniformLocation(ShaderIds[3], "DsFarEdge");
+    
+    // END UBERLIGHT SHADERS
 
 	glGenVertexArrays(1, &BufferIds[0]);
     OnGLError("ERROR: Could not generate the VAO");
@@ -256,7 +350,7 @@ void CreatePanda()
 	//glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(VERTICES[0]), (GLvoid*)0);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, vert_size, (GLvoid*)uv_offset);
 	//glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(VERTICES[0]), (GLvoid*)sizeof(VERTICES[0].Position));
-    //glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, vert_size, (GLvoid*)norm_offset);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, vert_size, (GLvoid*)norm_offset);
     OnGLError("ERROR: Could not set VAO attributes");
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, BufferIds[2]);
@@ -328,14 +422,27 @@ void DrawPanda(void)
     ModelMatrix = glm::rotate(ModelMatrix, PandaAngle, glm::vec3(0, 1, 0)); //rotateH
     ModelMatrix = glm::rotate(ModelMatrix, PandaAngle, glm::vec3(1, 0, 0)); //rotateP
     
-	glUseProgram(ShaderIds[0]);
+	glUseProgram(ShaderIds[used_program]);
     OnGLError("DRAW_ERROR: Could not use the shader program");
 
-	glUniformMatrix4fv(ModelMatrixUniformLocation, 1, GL_FALSE, glm::value_ptr(ModelMatrix));
-	glUniformMatrix4fv(ViewMatrixUniformLocation, 1, GL_FALSE, glm::value_ptr(ViewMatrix));
-	glUniformMatrix4fv(ProjectionMatrixUniformLocation, 1, GL_FALSE, glm::value_ptr(ProjectionMatrix));
-    glUniform1f(TimeLocation, (float)Now);
-    OnGLError("ERROR: Could not set the shader uniforms");
+    switch(used_program)
+    {
+        case 0:
+            glUniformMatrix4fv(ModelMatrixUniformLocation, 1, GL_FALSE, glm::value_ptr(ModelMatrix));
+            glUniformMatrix4fv(ViewMatrixUniformLocation, 1, GL_FALSE, glm::value_ptr(ViewMatrix));
+            glUniformMatrix4fv(ProjectionMatrixUniformLocation, 1, GL_FALSE, glm::value_ptr(ProjectionMatrix));
+            glUniform1f(TimeLocation, (float)Now);
+            OnGLError("ERROR: Could not set the shader uniforms");
+            break;
+        case 3:
+            glUniformMatrix4fv(ul_mm_loc, 1, GL_FALSE, glm::value_ptr(ModelMatrix));
+            glUniformMatrix4fv(ul_vm_loc, 1, GL_FALSE, glm::value_ptr(ViewMatrix));
+            glUniformMatrix4fv(ul_pm_loc, 1, GL_FALSE, glm::value_ptr(ProjectionMatrix));
+            glUniform1f(ul_time_loc, (float)Now);
+            
+            OnGLError("ERROR: Could not set the shader uniforms");
+            break;
+    }
 
 	glBindVertexArray(BufferIds[0]);
     OnGLError("ERROR: Could not bind the VAO for drawing purposes");
