@@ -15,9 +15,9 @@ include_directories(${GAMEARCH_SOURCE_DIR}/include)
 add_definitions("-g -DGLEW_STATIC -static")
 #add_subdirectory(src)
 
-set(EXECUTABLE_NAME "hw5-2")
+set(EXECUTABLE_NAME "hw6")
 
-add_executable(${EXECUTABLE_NAME} WIN32 MACOSX_BUNDLE src/hw5-2.cpp)
+add_executable(${EXECUTABLE_NAME} WIN32 MACOSX_BUNDLE src/hw6.cpp)
 
 # Detect and add SFML
 IF(WIN32)

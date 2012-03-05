@@ -21,19 +21,37 @@ namespace mvp {
         egg_model()
         {
             texture = "";
+            vert_arr = NULL;
+            poly_arr = NULL;
         }
         
         egg_model(const char * path)
         {
             texture = "";
+            vert_arr = NULL;
+            poly_arr = NULL;
             load_model(path);
+            to_arr();
         }
         
-        ~egg_model(){}
+        ~egg_model()
+        {
+            if(vert_arr) delete vert_arr;
+            if(poly_arr) delete poly_arr;
+        }
         
         vector<vert> vertices;
         vector<int> polygons;
         string texture;
+        
+        vert* vert_arr;
+        int* poly_arr;
+        
+        void to_arr()
+        {
+            vert_arr = new vert[vertices.size()];
+            poly_arr = new int[polygons.size()];
+        }
         
         void load_model(const char * path)
         {
@@ -90,6 +108,7 @@ namespace mvp {
                 }
             }
             file.close();
+            //assign_RGBA();
         }
         
     };

@@ -15,27 +15,35 @@
 #define PI 3.14159265
 
 int window_width  = 800,
-    window_height = 480;
+    window_height = 450;
     
 double last_tick, new_tick, tick_diff;
+double LastTime = 0;
+float PandaRotation = 0;
 
 bool exiting = false;
 
 sf::Window* window = NULL;
+sf::Clock* wclock = NULL;
+
+mvp::egg_model* panda = NULL;
 
 glm::mat4 projection_matrix = glm::perspective(60.0f, (float)window_width / (float)window_height, 0.1f, 100.f);
+//glm::mat4 view_matrix = glm::lookAt(glm::vec3(0, -10, 6), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
 glm::mat4 view_matrix = glm::mat4(1.0f);
-glm::mat4 model_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.0001f));
+glm::mat4 model_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.01f));
 
 GLuint
     projection_matrix_uniform_loc,
     view_matrix_uniform_loc,
     model_matrix_uniform_loc,
     texture_uniform_loc,
+    time_loc,
     program_id,
     vertex_id,
     fragment_id,
     texture_id,
+    sampler_id,
     vert_arr, vert_buf, index_buf,
     poly_count,
     vert_count,
@@ -55,7 +63,7 @@ void destroy_panda();                       /////
 void create_shaders();                      /////
 char* filetobuf(const string& file);        /////
 void cleanup();                             /////
-GLuint load_texture(const string& path);    /////
+void load_texture(const string& path);    /////
 
 int main()
 {
@@ -78,11 +86,10 @@ int main()
 
 void game_loop()
 {
-    sf::Clock clock;
-    last_tick = clock.GetElapsedTime().AsMilliseconds();
+    last_tick = wclock->GetElapsedTime().AsMilliseconds();
     while(window->IsOpen())
     {
-        new_tick = clock.GetElapsedTime().AsMilliseconds();
+        new_tick = wclock->GetElapsedTime().AsMilliseconds();
         tick_diff = new_tick - last_tick;
         
         // Handle events
@@ -174,6 +181,7 @@ void init_window()
 {
     // Create the window and select it as active
     window = new sf::Window(sf::VideoMode(window_width, window_height, 32), "Fun Fun Fun");
+    wclock = new sf::Clock();
     window->SetActive();
     window->Display();
     window->SetFramerateLimit(60);
@@ -208,7 +216,7 @@ void initialize()
 	);
     
     // Set out background color
-    glClearColor(0.5f, 0.5f, 0.5f, 0.0f);
+    glClearColor(0.0f, 0.5f, 0.5f, 0.0f);
 
     // Set up some GL values
 	glEnable(GL_DEPTH_TEST);
@@ -218,21 +226,43 @@ void initialize()
 	glFrontFace(GL_CCW);
     
     // Look at the panda
-    view_matrix = glm::lookAt(glm::vec3(0.0f,0.0f,15.0f),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,1.0f,0.0f));
+    view_matrix = glm::lookAt(glm::vec3(0.0f,-10.0f,15.0f),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,1.0f,0.0f));
 }
 
 void render()
 {
+    window->SetActive();
     // Clear the buffer
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // Load the shader program
     glUseProgram(program_id);
     
+    float PandaAngle;
+	double Now = wclock->GetElapsedTime().AsMilliseconds();
+
+	if (LastTime == 0)
+		LastTime = Now;
+
+	PandaRotation += 5.0f * ((float)(Now - LastTime));
+    //fprintf(stderr, "Now: %f, Last: %f, CR: %f\n",Now,LastTime, (45.0f * ((float)(Now - LastTime) / CLOCKS_PER_SEC)));
+	PandaAngle = PandaRotation * (float)(PI / 180); //radians
+    //fprintf(stderr, "cube angle: %f\n",PandaAngle);
+	LastTime = Now;
+
+	//ModelMatrix = glm::mat4(1.0f);
+    model_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.01f));
+    model_matrix = glm::rotate(model_matrix, PandaAngle, glm::vec3(0, 1, 0)); //rotateH
+    model_matrix = glm::rotate(model_matrix, PandaAngle, glm::vec3(1, 0, 0)); //rotateP
+    
+    
+    //double now = wclock->GetElapsedTime().AsMilliseconds();
+    
     // Set the Uniforms
     glUniformMatrix4fv(model_matrix_uniform_loc, 1, GL_FALSE, glm::value_ptr(model_matrix));
 	glUniformMatrix4fv(view_matrix_uniform_loc, 1, GL_FALSE, glm::value_ptr(view_matrix));
 	glUniformMatrix4fv(projection_matrix_uniform_loc, 1, GL_FALSE, glm::value_ptr(projection_matrix));
-    glUniform1i(texture_uniform_loc, 0);
+    //glUniform1i(texture_uniform_loc, 0);
+    glUniform1f(time_loc, (float)Now);
     
     // Draw our panda
     draw_panda();
@@ -247,8 +277,8 @@ void create_shaders()
     // Create the program
     program_id = glCreateProgram();
     // Create the shaders
-    GLuint fragment_id = glCreateShader(GL_FRAGMENT_SHADER);
-    GLuint vertex_id = glCreateShader(GL_VERTEX_SHADER);
+    fragment_id = glCreateShader(GL_FRAGMENT_SHADER);
+    vertex_id = glCreateShader(GL_VERTEX_SHADER);
     
     // Get the shader source code
     char* fragment_source = filetobuf("shaders/panda.fs");
@@ -273,14 +303,14 @@ void create_shaders()
     // Link the program
     glLinkProgram(program_id);
     
-    // Set the program ass active
-    glUseProgram(program_id);
+    // Set the program as active
+    //glUseProgram(program_id);
     
     // Get the shader Uniform locations
     projection_matrix_uniform_loc = glGetUniformLocation(program_id, "ModelMatrix");
     view_matrix_uniform_loc = glGetUniformLocation(program_id, "ViewMatrix");
     model_matrix_uniform_loc = glGetUniformLocation(program_id, "ProjectionMatrix");
-    texture_uniform_loc = glGetUniformLocation(program_id, "s_tex");
+    time_loc = glGetUniformLocation(program_id, "time");
     
     // Clean up
     free(fragment_source);
@@ -290,48 +320,48 @@ void create_shaders()
 void create_panda()
 {
     // Load the model
-    mvp::egg_model panda("models/panda-model.egg");
+    panda = new mvp::egg_model("models/panda-model.egg");
     
     //Get some vertex and polygon info
-    vert_count = (GLuint)panda.vertices.size();
-    poly_count = (GLuint)panda.polygons.size();
+    vert_count = (GLuint)panda->vertices.size();
+    poly_count = (GLuint)panda->polygons.size();
     
-    vert_size = (GLuint)sizeof(panda.vertices[0]);
-    uv_offset = (GLuint)sizeof(panda.vertices[0].position);
-    poly_size = (GLuint)sizeof(panda.polygons[0]);
+    vert_size = (GLuint)sizeof(panda->vertices[0]);
+    uv_offset = (GLuint)sizeof(panda->vertices[0].position);
+    poly_size = (GLuint)sizeof(panda->polygons[0]);
     
     // Make and bind a vertex array object
     glGenVertexArrays(1,&vert_arr);
     glBindVertexArray(vert_arr);
     
+    // Enable the vertex array's attributes
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    
     // Generate and bind a vertex buffer object
     glGenBuffers(1,&vert_buf);
     glBindBuffer(GL_ARRAY_BUFFER, vert_buf);
+    
+    // Set the VBO's data to the vertices
+    glBufferData(GL_ARRAY_BUFFER, vert_size * vert_count, &(panda->vertices[0]), GL_STATIC_DRAW);
+    //glBufferData(GL_ARRAY_BUFFER, sizeof(VERTICES), VERTICES, GL_STATIC_DRAW);
+    
+    // Set the VAO's data to the position and the vertex position and uv
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, vert_size, (GLvoid*)0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, vert_size, (GLvoid*)uv_offset);
+    //glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(VERTICES[0]), (GLvoid*)0);
+    //glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(VERTICES[0]), (GLvoid*)sizeof(VERTICES[0].Position));
     
     // generate and bind the index buffer
     glGenBuffers(1,&index_buf);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buf);
     
-    // Set the VBO's data to the vertices
-    //glBufferData(GL_ARRAY_BUFFER, vert_size * vert_count, &panda.vertices[0], GL_STATIC_DRAW);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(VERTICES), VERTICES, GL_STATIC_DRAW);
-    
-    // Set the VAO's data to the position and the vertex position and uv
-    //glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, vert_size, (GLvoid*)0);
-    //glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, vert_size, (GLvoid*)uv_offset);
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(VERTICES[0]), (GLvoid*)0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(VERTICES[0]), (GLvoid*)sizeof(VERTICES[0].Position));
-    
-    // Enable the vertex array's attributes
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    
     // Set the index buffer to the polygons
-    //glBufferData(GL_ELEMENT_ARRAY_BUFFER, poly_size * poly_count, &panda.polygons[0], GL_STATIC_DRAW);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(INDICES), INDICES, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, poly_size * poly_count, &(panda->polygons[0]), GL_STATIC_DRAW);
+    //glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(INDICES), INDICES, GL_STATIC_DRAW);
     
     // Load the texture
-    texture_id = load_texture("textures/" + panda.texture);
+    load_texture("textures/" + panda->texture);
     
     // Clean up
     glBindVertexArray(0);
@@ -344,8 +374,8 @@ void draw_panda()
     // Set the vertex array as active
     glBindVertexArray(vert_arr);
     // Draw the triangles
-    //glDrawElements(GL_TRIANGLES, poly_count, GL_UNSIGNED_INT, (GLvoid*)0);
-    glDrawElements(GL_TRIANGLES, 5412, GL_UNSIGNED_INT, (GLvoid*)0);
+    glDrawElements(GL_TRIANGLES, poly_count, GL_UNSIGNED_INT, (GLvoid*)0);
+    //glDrawElements(GL_TRIANGLES, 5412, GL_UNSIGNED_INT, (GLvoid*)0);
 }
 
 void destroy_panda()
@@ -354,9 +384,11 @@ void destroy_panda()
     glDeleteBuffers(1,&vert_buf);
     glDeleteBuffers(1,&index_buf);
     glDeleteVertexArrays(1,&vert_arr);
+    
+    delete panda;
 }
 
-GLuint load_texture(const string& path)
+void load_texture(const string& path)
 {
     // Load and image from a file
     sf::Image img;
@@ -365,11 +397,14 @@ GLuint load_texture(const string& path)
         fprintf( stderr, "Failed to load texture" );
         throw 1;
     }
-    
-    GLuint ret;
+    img.FlipVertically();
+
     // Generate and bind the texture
-    glGenTextures(1, &ret);
-    glBindTexture(GL_TEXTURE_2D, ret);
+    glGenTextures(1, &texture_id);
+    glBindTexture(GL_TEXTURE_2D, texture_id);
+    
+    // specify the image to use as the texture
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.GetWidth(), img.GetHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, img.GetPixelsPtr());
     
     // Set some GL values
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
@@ -377,10 +412,13 @@ GLuint load_texture(const string& path)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     
-    // specify the image to use as the texture
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.GetWidth(), img.GetHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, img.GetPixelsPtr());
-    
-    return ret;
+    glUseProgram(program_id);
+
+	sampler_id = glGetUniformLocation(program_id, "s_tex");
+	glActiveTexture(GL_TEXTURE0);
+	glUniform1i(sampler_id, 0);
+
+    glUseProgram(program_id);
 }
 
 
