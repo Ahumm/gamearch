@@ -440,6 +440,12 @@ void DrawPanda(void)
             glUniformMatrix4fv(ul_pm_loc, 1, GL_FALSE, glm::value_ptr(ProjectionMatrix));
             glUniform1f(ul_time_loc, (float)Now);
             
+            glm::vec4 ViewPosition = ViewMatrix * glm::vec4(0,0,0,1);
+            glm::vec3 WCLightPos = glm:vec3(ViewPosition[0],ViewPosition[1],ViewPosition[2]);
+            glm::mat4 WCtoLCit = glm::inverse(ViewMatrix);
+            
+            
+            
             OnGLError("ERROR: Could not set the shader uniforms");
             break;
     }
