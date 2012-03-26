@@ -10,7 +10,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "morph.h"
-#include "egg_model.h"
+#include "egg_model_v2.h"
 
 int CurrentWidth = 800,
 	CurrentHeight = 450,
@@ -23,7 +23,7 @@ mvp::egg_model* panda = NULL;
 
 double thistime, oldtime, dt, starttime; //not floats!
 
-glm::vec3 campos = glm::vec3(0.0,-10.0,15.0);
+glm::vec3 campos = glm::vec3(0.0,0.0,15.0);
 glm::vec3 tarpos = glm::vec3(0.0,0.0,0.0);
 glm::vec3 upworl = glm::vec3(0.0,1.0,0.0);
 
@@ -41,6 +41,7 @@ GLuint
 	ProjectionMatrixUniformLocation,
 	ViewMatrixUniformLocation,
 	ModelMatrixUniformLocation,
+    joint_uniform_loc,
     TimeLocation,
 	samplerLoc,
 	BufferIds[3] = { 0 },
@@ -52,73 +53,12 @@ GLuint
     vert_count,
     poly_size,
     vert_size,
+    rgba_offset,
     uv_offset,
-    norm_offset;
-    
-// FOR UBERLIGHT
-GLuint
-    ul_time_loc,
-    ul_vm_loc,
-    ul_mm_loc,
-    ul_pm_loc,
-    wclightpos_loc,
-    viewposition_loc,
-    wctolc_loc,
-    wctolcit_loc,
-    mctowc_loc,
-    mctowcit_loc,
-    ul_sampler_loc,
-    lightcolor_loc,
-    lightweights_loc,
-    surfaceweights_loc,
-    surfaceroughness_loc,
-    ambientclamping_loc,
-    barnshaping_loc,
-    sewidth_loc,
-    seheight_loc,
-    sewidthedge_loc,
-    seheightedge_loc,
-    seroundness_loc,
-    dsnear_loc,
-    dsfar_loc,
-    dsnearedge_loc,
-    dsfaredge_loc;
-    
-// START UBERLIGHT DATA STUFF
-
-glm::vec3 wclightpos = campos;                       // Starting light pos (same as camera)
-glm::vec4 viewposition = glm::vec4(campos, 1.0f);    // Starting camera position
-
-glm::mat4 wctolc;
-glm::mat4 wctolcit;
-glm::mat4 mctowc;
-glm::mat4 mctowcit;
-
-glm::vec3 lightcolor = glm::vec3(1.0f,1.0f,1.0f);
-glm::vec3 lightweights = glm::vec3(1.0f,1.0f,1.0f);
-
-glm::vec3 surfaceweights = glm::vec3(1.0f,1.0f,1.0f);
-float surfaceroughness = 1.0f;
-bool ambientclamping = true;
-
-bool barnshaping = true;
-float sewidth = 5.0f;
-float seheight = 5.0f;
-float sewidthedge = 1.0f;
-float seheightedge = 1.0f;
-float seroundness = 4.0f;
-
-float dsnear = 0.1f;
-float dsfar = 10.0f;
-float dsnearedge = 0.0f;
-float dsfaredge = 0.1f;
-
-// END UBERLIGHT DATA STUFF    
-    
-    
-    
-    
-	
+    norm_offset,
+    j_index_offset,
+    j_weight_offset;
+ 
 float PandaRotation = 0;
 double LastTime = 0;
 
@@ -282,33 +222,38 @@ void RenderFunction(void)
 void CreatePanda()
 {
     printf("Create\n");
-    panda = new mvp::egg_model("models/panda-model.egg");
+    panda = new mvp::egg_model("models/bar_tri.egg");
 
 //Get some vertex and polygon info
     vert_count = (GLuint)panda->vertices.size();
     poly_count = (GLuint)panda->polygons.size();
     
     vert_size = (GLuint)sizeof(panda->vertices[0]);
-    uv_offset = (GLuint)sizeof(panda->vertices[0].position);
-    norm_offset = (GLuint)(sizeof(panda->vertices[0].position) + sizeof(panda->vertices[0].uv));
+    rgba_offset = (GLuint)sizeof(panda->vertices[0].position);
+    uv_offset = rgba_offset + (GLuint)(sizeof(panda->vertices[0].rgba));
+    norm_offset = uv_offset + (GLuint)(sizeof(panda->vertices[0].uv));
+    j_index_offset = norm_offset + (GLuint)(sizeof(panda->vertices[0].normal));
+    j_weight_offset = j_index_offset + (GLuint)(sizeof(panda->vertices[0].j_index));
     poly_size = (GLuint)sizeof(panda->polygons[0]);
-    
-    fprintf(stdout, "is: %u\nfs: %u\nvc: %u\npc: %u\nvs: %u\nuvo: %u\nno: %u\nps: %u\n", sizeof(int),sizeof(float),vert_count, poly_count, vert_size, uv_offset, norm_offset, poly_size);
     
     // NORMAL SHADERS
     nolight = glCreateProgram();
     OnGLError("ERROR: Could not create the shader program");
 	
-	ShaderIds[0] = LoadShader("shaders/panda.fs", GL_FRAGMENT_SHADER);
+	ShaderIds[0] = LoadShader("shaders/jointed.fs", GL_FRAGMENT_SHADER);
     checkShader(ShaderIds[0]);
-	ShaderIds[1] = LoadShader("shaders/panda.vs", GL_VERTEX_SHADER);
+	ShaderIds[1] = LoadShader("shaders/jointed.vs", GL_VERTEX_SHADER);
 	checkShader(ShaderIds[1]);
 	glAttachShader(nolight, ShaderIds[0]);
 	glAttachShader(nolight, ShaderIds[1]);
 	
     //if not using "location" in shader
 	glBindAttribLocation(nolight, 0, "in_Position");
-	glBindAttribLocation(nolight, 1, "in_Tex");
+	glBindAttribLocation(nolight, 1, "in_Color");
+	glBindAttribLocation(nolight, 2, "in_Tex");
+	glBindAttribLocation(nolight, 3, "in_Normal");
+	glBindAttribLocation(nolight, 4, "in_Joints");
+	glBindAttribLocation(nolight, 5, "in_Weights");
     //glBindAttribLocation(ShaderIds[0], 2, "in_Normal");
 	
 	glLinkProgram(nolight);
@@ -325,74 +270,9 @@ void CreatePanda()
     OnGLError("ERROR: Could not get View uniform locations");
     ProjectionMatrixUniformLocation = glGetUniformLocation(nolight, "ProjectionMatrix");
     OnGLError("ERROR: Could not get Projection uniform locations");
-    
-    // END NORMAL SHADER
-    
-    // UNSET ACTIVE PROGRAM
-    glUseProgram(0);
-    
-    // UBERLIGHT SHADERS
+    joint_uniform_loc = glGetUniformLocation(nolight, "Joints");
     
     
-    uberlight = glCreateProgram();
-    printf("%d\n",uberlight);
-    OnGLError("ERROR: Could not create the shader program");
-	
-	ShaderIds[2] = LoadShader("shaders/uberlight.fs.bak", GL_FRAGMENT_SHADER);
-    checkShader(ShaderIds[2]);
-	ShaderIds[3] = LoadShader("shaders/uberlight.vs.bak", GL_VERTEX_SHADER);
-	checkShader(ShaderIds[3]);
-	glAttachShader(uberlight, ShaderIds[2]);
-	glAttachShader(uberlight, ShaderIds[3]);
-    
-    printf("%d\n", ShaderIds[3]);
-	
-    //if not using "location" in shader
-	glBindAttribLocation(uberlight, 0, "in_Position");
-	glBindAttribLocation(uberlight, 1, "in_Tex");
-    glBindAttribLocation(uberlight, 2, "in_Normal");
-	
-	glLinkProgram(uberlight);
-    OnGLError("ERROR: Could not link the shader program");
-
-    //glUseProgram(uberlight);
-    OnGLError("ERROR: Could use shader program (Create)");
-    
-    ul_time_loc = glGetUniformLocation(uberlight, "time");
-    printf("%d\n", ul_time_loc);
-    OnGLError("ERROR: Could not get time uniform locations");
-    ul_mm_loc = glGetUniformLocation(uberlight, "ModelMatrix");
-    OnGLError("ERROR: Could not get Model uniform locations");
-    ul_vm_loc = glGetUniformLocation(uberlight, "ViewMatrix");
-    OnGLError("ERROR: Could not get View uniform locations");
-    ul_pm_loc = glGetUniformLocation(uberlight, "ProjectionMatrix");
-    OnGLError("ERROR: Could not get Projection uniform locations");
-    wclightpos_loc = glGetUniformLocation(uberlight, "WCLightPos");
-    viewposition_loc = glGetUniformLocation(uberlight, "ViewPosition");
-    wctolc_loc = glGetUniformLocation(uberlight, "WCtoLC");
-    wctolcit_loc = glGetUniformLocation(uberlight, "WCtoLCit");
-    mctowc_loc = glGetUniformLocation(uberlight, "MCtoWC");
-    mctowcit_loc = glGetUniformLocation(uberlight, "MCtoWCit");
-    ul_sampler_loc = glGetUniformLocation(uberlight, "s_tex");
-    lightcolor_loc = glGetUniformLocation(uberlight, "LightColor");
-    lightweights_loc = glGetUniformLocation(uberlight, "LightWeights");
-    surfaceweights_loc = glGetUniformLocation(uberlight, "SurfaceWeights");
-    surfaceroughness_loc = glGetUniformLocation(uberlight, "SurfaceRoughness");
-    ambientclamping_loc = glGetUniformLocation(uberlight, "AmbientClamping");
-    barnshaping_loc = glGetUniformLocation(uberlight, "BarnShaping");
-    sewidth_loc = glGetUniformLocation(uberlight, "SeWidth");
-    seheight_loc = glGetUniformLocation(uberlight, "SeHeight");
-    sewidthedge_loc = glGetUniformLocation(uberlight, "SeWidthEdge");
-    seheightedge_loc = glGetUniformLocation(uberlight, "SeHeightEdge");
-    seroundness_loc = glGetUniformLocation(uberlight, "SeRoundness");
-    dsnear_loc = glGetUniformLocation(uberlight, "DsNear");
-    dsfar_loc = glGetUniformLocation(uberlight, "DsFar");
-    dsnearedge_loc = glGetUniformLocation(uberlight, "DsNearEdge");
-    dsfaredge_loc = glGetUniformLocation(uberlight, "DsFarEdge");
-    OnGLError("ERROR: Could not get some uniform locations");
-    
-    // END UBERLIGHT SHADERS
-
     used_program = 0;
     glUseProgram(nolight);
     
@@ -414,10 +294,11 @@ void CreatePanda()
     OnGLError("ERROR: Could not bind the VBO to the VAO");
 
 	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, vert_size, (GLvoid*)0);
-	//glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(VERTICES[0]), (GLvoid*)0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, vert_size, (GLvoid*)uv_offset);
-	//glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(VERTICES[0]), (GLvoid*)sizeof(VERTICES[0].Position));
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, vert_size, (GLvoid*)norm_offset);
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, vert_size, (GLvoid*)rgba_offset);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, vert_size, (GLvoid*)uv_offset);
+    glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, vert_size, (GLvoid*)norm_offset);
+    glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, vert_size, (GLvoid*)j_index_offset);
+    glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, vert_size, (GLvoid*)j_weight_offset);
     OnGLError("ERROR: Could not set VAO attributes");
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, BufferIds[2]);
@@ -426,6 +307,8 @@ void CreatePanda()
     OnGLError("ERROR: Could not bind the IBO to the VAO");
 
 	glBindVertexArray(0);
+    
+    if(!panda->is_tex) return;
     
     // Generate texture objects
     glGenTextures( 1, &TexId );
@@ -517,57 +400,12 @@ void DrawPanda(void)
             glUniform1f(TimeLocation, (float)Now);
             OnGLError("ERROR: Could not set the shader uniforms");
             break;
-        case 1:
-            // COMPUTATIONS
-            
-            wctolc = glm::lookAt(campos, tarpos, upworl);
-            wctolcit = glm::transpose(glm::inverse(wctolc));
-            mctowc = ViewMatrix * ModelMatrix;
-            mctowcit = glm::transpose(glm::inverse(mctowc));
-        
-            // UNIFORM SETTING
-            
-            glUniformMatrix4fv(ul_mm_loc, 1, GL_FALSE, glm::value_ptr(ModelMatrix));
-            glUniformMatrix4fv(ul_vm_loc, 1, GL_FALSE, glm::value_ptr(ViewMatrix));
-            glUniformMatrix4fv(ul_pm_loc, 1, GL_FALSE, glm::value_ptr(ProjectionMatrix));
-            glUniform1f(ul_time_loc, (float)Now);
-            glUniform1i(ul_sampler_loc, 0);
-            
-            glUniform3fv(wclightpos_loc, 1, glm::value_ptr(wclightpos));             // WCLIGHTTPOS
-            glUniform4fv(viewposition_loc, 1, glm::value_ptr(viewposition));         // VIEWPOSITION
-            
-            glUniformMatrix4fv(wctolc_loc, 1, GL_FALSE, glm::value_ptr(wctolc));     // WCTOLC
-            glUniformMatrix4fv(wctolcit_loc, 1, GL_FALSE, glm::value_ptr(wctolcit)); // WCTOLCIT
-            glUniformMatrix4fv(mctowc_loc, 1, GL_FALSE, glm::value_ptr(mctowc));     // MCTOWC
-            glUniformMatrix4fv(mctowcit_loc, 1, GL_FALSE, glm::value_ptr(mctowcit)); // MCTOWCIT
-            
-            glUniform3fv(lightcolor_loc, 1, glm::value_ptr(lightcolor));             // LIGHTCOLOR
-            glUniform3fv(lightweights_loc, 1, glm::value_ptr(lightweights));         // LIGHTWEIGHTS
-            
-            glUniform3fv(surfaceweights_loc, 1, glm::value_ptr(surfaceweights));     // SURFACEWEIGHTS
-            glUniform1f(surfaceroughness_loc, surfaceroughness);                     // SURFACEROUGHNESS
-            glUniform1i(ambientclamping_loc, (ambientclamping) ? 1 : 0);             // AMBIENTCLAMPING
-            
-            glUniform1i(barnshaping_loc, (barnshaping) ? 1 : 0);                     // BARNSHAPING
-            glUniform1f(sewidth_loc, sewidth);                                       // SEWIDTH
-            glUniform1f(seheight_loc, seheight);                                     // SEHEIGHT
-            glUniform1f(sewidthedge_loc, sewidthedge);                               // SEWIDTHEDGE
-            glUniform1f(seheightedge_loc, seheightedge);                             // SEHEIGHTEDGE
-            glUniform1f(seroundness_loc, seroundness);                               // SEROUNDNESS
-            
-            glUniform1f(dsnear_loc, dsnear);                                         // DSNEAR
-            glUniform1f(dsfar_loc, dsfar);                                           // DSFAR
-            glUniform1f(dsnearedge_loc, dsnearedge);                                 // DSNEAREDGE
-            glUniform1f(dsfaredge_loc, dsfaredge);                                   // DSFAREDGE
-            
-            OnGLError("ERROR: Could not set the shader uniforms");
-            break;
     }
 
 	glBindVertexArray(BufferIds[0]);
     OnGLError("ERROR: Could not bind the VAO for drawing purposes");
 
-	glDrawElements(GL_TRIANGLES, poly_count, GL_UNSIGNED_INT, (GLvoid*)0);
+	glDrawElements(GL_TRIANGLES, poly_count * 3, GL_UNSIGNED_INT, (GLvoid*)0);
 	OnGLError("ERROR: Could not draw the cube");
 
 	glBindVertexArray(0);

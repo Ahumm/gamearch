@@ -1,7 +1,5 @@
 #version 150
 
-uniform vec3 SurfaceColor;
-
 // Light parameters
 uniform vec3 LightColor;
 uniform vec3 LightWeights;
@@ -25,6 +23,9 @@ uniform float DsFar;
 uniform float DsNearEdge;
 uniform float DsFarEdge;
 
+uniform sampler2D s_tex;
+
+in vec2 v_tex;
 in vec3 LCpos;          // Vertex position in light coordinates
 in vec3 LCnorm;         // Normal in light coordinates
 in vec3 LCcamera;       // Camera position in light coordinates
@@ -94,9 +95,13 @@ void main()
       litResult[2] = litResult[1] * max(ndoth, 0.0) * SurfaceRoughness;
       litResult *= SurfaceWeights * LightWeights;
 
+      vec4 tmpSC = texture(s_tex, v_tex);
+      vec3 SurfaceColor = tmpSC.xyz;
+      
       vec3 ambient = tmpLightColor * SurfaceColor * litResult[0];
       vec3 diffuse = tmpColor * SurfaceColor * litResult[1];
       vec3 specular = tmpColor * litResult[2];
-      FragColor = vec4(attenuation *
-                         (ambient + diffuse + specular), 1.0);
+      FragColor = vec4(attenuation * (ambient + diffuse + specular), 1.0);
+                         
+      //FragColor = vec4(1,1,1,1);
 }

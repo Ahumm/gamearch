@@ -22,15 +22,17 @@ out vec3 LCcamera;         // Camera position in light coordinates
 
 void main()
 {
-    gl_Position = ftransform();
 
+    gl_Position = ProjectionMatrix * ViewMatrix * ModelMatrix * vec4(in_Position.xyz, 1.0);
+    
     // Compute world space position and normal
-    vec4 wcPos = MCtoWC * gl_Vertex;
-    vec3 wcNorm = (MCtoWCit * vec4(gl_Normal, 0.0)).xyz;
+    vec4 wcPos = MCtoWC * vec4(in_Position.xyz, 1.0); // gl_Vertex;
+    vec3 wcNorm = (MCtoWCit * vec4(in_Normal.xyz, 0.0)).xyz; // gl_Normal
 
     // Compute light coordinate system camera position,
     // vertex position and normal
     LCcamera = (WCtoLC * ViewPosition).xyz;
+    
     LCpos = (WCtoLC * wcPos).xyz;
     LCnorm = (WCtoLCit * vec4(wcNorm, 0.0)).xyz;
 }
