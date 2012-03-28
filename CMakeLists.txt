@@ -15,28 +15,30 @@ include_directories(${GAMEARCH_SOURCE_DIR}/include)
 add_definitions("-g -DGLEW_STATIC -static")
 #add_subdirectory(src)
 
-set(EXECUTABLE_NAME "hw6")
-
-add_executable(${EXECUTABLE_NAME} WIN32 MACOSX_BUNDLE src/hw6.cpp)
-
-# Detect and add SFML
 IF(WIN32)
 	set(SFMLDIR "C:/MinGW/")
 ENDIF()
 find_package(SFML 2 REQUIRED system window graphics network audio)
-target_link_libraries(${EXECUTABLE_NAME} ${SFML_LIBRARIES})
-
 
 find_package(GLEW REQUIRED)
 include_directories(${GLEW_INCLUDE_PATH})
-target_link_libraries(${EXECUTABLE_NAME} ${GLEW_LIBRARY})
-#target_link_libraries(${EXECUTABLE_NAME} glew)
 
-IF(WIN32)
-	target_link_libraries(${EXECUTABLE_NAME} opengl32)
-ELSE()
-	find_package(OpenGL REQUIRED)
-	include_directories(${OPENGL_INCLUDE_DIR})
-	TARGET_LINK_LIBRARIES(${EXECUTABLE_NAME} ${OPENGL_LIBRARIES})
-ENDIF()
+set(PROGRAM_NAME "hw6" "hw6-2")
+
+foreach(program ${PROGRAM_NAME})
+	add_executable(${program} WIN32 MACOSX_BUNDLE src/${program}.cpp)
+
+	# Detect and add SFML
+	target_link_libraries(${program} ${SFML_LIBRARIES})
+
+	target_link_libraries(${program} ${GLEW_LIBRARY})
+
+	IF(WIN32)
+		target_link_libraries(${program} opengl32)
+	ELSE()
+		find_package(OpenGL REQUIRED)
+		include_directories(${OPENGL_INCLUDE_DIR})
+		TARGET_LINK_LIBRARIES(${program} ${OPENGL_LIBRARIES})
+	ENDIF()
+endforeach(program)
 

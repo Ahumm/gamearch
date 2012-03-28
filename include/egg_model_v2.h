@@ -5,6 +5,7 @@
 #include <vector>
 #include <fstream>
 #include <iostream>
+#include <map>
 
 using namespace std;
 
@@ -102,10 +103,12 @@ namespace mvp {
             }
             return NULL;
         }
+        
+        
     
         string name;
         glm::mat4 localmatrix;
-        vector<*joint> children;
+        vector<joint*> children;
     };
     
     class egg_model
@@ -116,7 +119,7 @@ namespace mvp {
             texture = "";
             vert_arr = NULL;
             poly_arr = NULL;
-            root = NULL;
+            j_root = NULL;
             is_tex = false;
         }
         
@@ -125,7 +128,7 @@ namespace mvp {
             texture = "";
             vert_arr = NULL;
             poly_arr = NULL;
-            root = NULL;
+            j_root = NULL;
             is_tex = false;
             load_model(path);
             to_arr();
@@ -135,7 +138,7 @@ namespace mvp {
         {
             if(vert_arr) delete vert_arr;
             if(poly_arr) delete poly_arr;
-            if(root) delete root;
+            if(j_root) delete j_root;
         }
         
         vector<vert> vertices;
@@ -158,7 +161,7 @@ namespace mvp {
         
         void load_model(const char * path)
         {
-            string munch;
+            string munch = "";
         
             ifstream file;
             file.open(path);
@@ -221,10 +224,10 @@ namespace mvp {
                     
                     string s_tag;
                     file >> s_tag;
-                    while s_tag != "}") {
+                    while(s_tag != "}") {
                         if(s_tag == "<RGBA>") {
                             file >> munch;
-                            file >> t_poly.rgba[0] >> t_poly.rgba[1] >> t_poly.rgba[2] >> t_poly.rgba[3] 
+                            file >> t_poly.rgba[0] >> t_poly.rgba[1] >> t_poly.rgba[2] >> t_poly.rgba[3];
                             file >> munch;
                         }
                         else if(s_tag == "<VertexRef>") {
@@ -246,14 +249,13 @@ namespace mvp {
                     j_root = munch_joint(file);
                 }
             }
-            
-            
             file.close();
         }
         
-        joint* munch_joint(&ifstream)
+        joint* munch_joint(ifstream &file)
         {
             joint* t_joint = new joint;
+            string munch = "";
             
             file >> t_joint->name;
             file >> munch;
@@ -267,12 +269,15 @@ namespace mvp {
                     while(ss_tag != "}") {
                         if(ss_tag == "<Matrix4>") {
                             file >> munch;
-                            glm::mat4 t_mat4(0.0);
+                            float arr[16];
+                            
                             for(int i = 0; i < 16; ++i) {
                                 float t;
                                 file >> t;
-                                t_mat4[i] = t;
+                                arr[i] = t;
                             }
+                            glm::mat4 t_mat4 = glm::transpose(glm::make_mat4(arr));
+                            t_joint->localmatrix = t_mat4;
                             file >> munch;
                         }
                         file >> ss_tag;
@@ -297,16 +302,15 @@ namespace mvp {
                             file >> munch >> munch >> munch;
                         }
                         else {
-                            v.push_back(ss_tag);
+                            v.push_back(atoi(ss_tag.c_str()));
                         }
                         file >> ss_tag;
                     }
                     for(int i = 0; i < v.size(); ++i) {
-                        vert_weight* v_weights = vertex_weights[v[i]];
                         for(int j = 0; j < 3; ++j) {
-                            if(v_weights->joints[j] == "") {
-                                v_weights->joints[j] = t_joint->name;
-                                v_weights->weights[j] = weight;
+                            if(vertex_weights[v[i]].joints[j] == "") {
+                                vertex_weights[v[i]].joints[j] = t_joint->name;
+                                vertex_weights[v[i]].weights[j] = weight;
                                 break;
                             }
                         }
@@ -321,12 +325,13 @@ namespace mvp {
         {
             if(!j_root) return;
             
-            map<string,int> joint_holder;
+            std::map<string,int> joint_holder;
             
             int s = weight_helper(joint_holder, j_root, 0);
             
-            for(vector<vert>::iterator it = vertices.begin(), vector<vert_weight>::iterator w_it = vertex_weights.begin(); it != vertices.end(); it++, w_it++)
-            for(vector<vert>::iterator it = vertices.begin(), vector<vert_weight>::iterator w_it = vertex_weights.begin(); it != vertices.end(); it++, w_it++)
+            vector<vert>::iterator it;
+            vector<vert_weight>::iterator w_it;
+            for(it = vertices.begin(), w_it = vertex_weights.begin(); it != vertices.end(); it++, w_it++)
             {
                 for(int j = 0; j < 3; ++j) {
                     if((*w_it).joints[j] != "") {
@@ -340,7 +345,7 @@ namespace mvp {
             }
         }
         
-        int weight_helper(&map<string,int> holder, joint* root, int c)
+        int weight_helper(std::map<string,int> &holder, joint* root, int c)
         {
             // Add root joint
             holder.insert(pair<string,int>(root->name, c));

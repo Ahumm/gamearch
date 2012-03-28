@@ -25,7 +25,8 @@ void main( void )
 
     t_joint.w = 1.0; // Ensure against stupidity
     
-    gl_Position = mvp * t_joint;
+    //gl_Position = mvp * t_joint;
+    gl_Position = mvp * vec4(in_Position.xyz, 1.0);;
     
     v_Color = in_Color;
     v_Tex = in_Tex;
