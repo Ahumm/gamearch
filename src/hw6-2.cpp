@@ -374,23 +374,10 @@ void DestroyPanda()
 
 void DrawPanda(void)
 {
-	float PandaAngle;
 	double Now = wclock->GetElapsedTime().AsMilliseconds();
 
-	if (LastTime == 0)
-		LastTime = Now;
-
-	PandaRotation += 5.0f * ((float)(Now - LastTime));
-    //fprintf(stderr, "Now: %f, Last: %f, CR: %f\n",Now,LastTime, (45.0f * ((float)(Now - LastTime) / CLOCKS_PER_SEC)));
-	PandaAngle = PandaRotation * (float)(PI / 180); //radians
-    //fprintf(stderr, "cube angle: %f\n",PandaAngle);
-	LastTime = Now;
-
-	//ModelMatrix = glm::mat4(1.0f);
-    ModelMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.01f));
-    ModelMatrix = glm::rotate(ModelMatrix, PandaAngle, glm::vec3(0, 1, 0)); //rotateH
-    ModelMatrix = glm::rotate(ModelMatrix, PandaAngle, glm::vec3(1, 0, 0)); //rotateP
-
+    panda->update();
+    
     switch(used_program)
     {
         case 0:
@@ -398,6 +385,7 @@ void DrawPanda(void)
             glUniformMatrix4fv(ViewMatrixUniformLocation, 1, GL_FALSE, glm::value_ptr(ViewMatrix));
             glUniformMatrix4fv(ProjectionMatrixUniformLocation, 1, GL_FALSE, glm::value_ptr(ProjectionMatrix));
             glUniform1f(TimeLocation, (float)Now);
+            glUniformMatrix4fv(joint_uniform_loc, panda->s_joint_vec.size() / 16, GL_FALSE, &(panda->s_joint_vec[0]));
             OnGLError("ERROR: Could not set the shader uniforms");
             break;
     }

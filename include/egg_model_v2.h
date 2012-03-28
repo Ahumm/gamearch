@@ -38,42 +38,11 @@ namespace mvp {
         joint()
         {
             name = "";
-            localmatrix = glm::mat4(1.0);
+            local = glm::mat4(1.0);
         }
         
         ~joint()
         {
-        }
-        
-        glm::mat4 to_model_matrix(string j_name)
-        {
-            if(name == j_name)
-            {
-                return localmatrix;
-            }
-            glm::mat4 cmp = glm::mat4(0.0);
-            for(int i = 0; i < children.size(); ++i)
-            {
-                glm::mat4 c_tmp = children[i]->to_model_matrix_helper(j_name, localmatrix);
-                if(c_tmp != cmp) return c_tmp;
-            }
-            return cmp;
-        }
-        
-        glm::mat4 to_model_matrix_helper(string j_name, glm::mat4 parentmat)
-        {
-            if(name == j_name)
-            {
-                return parentmat * localmatrix;
-            }
-            glm::mat4 cmp = glm::mat4(0.0);
-            glm::mat4 l_to_p = parentmat * localmatrix;
-            for(int i = 0; i < children.size(); ++i)
-            {
-                glm::mat4 c_tmp = children[i]->to_model_matrix_helper(j_name, l_to_p);
-                if(c_tmp != cmp) return c_tmp;
-            }
-            return cmp;
         }
         
         bool add_joint(string p_name, joint* n_joint)
@@ -108,7 +77,7 @@ namespace mvp {
         void print_joint(string tabs = "") {
             cout << tabs << "Name: " << name << endl;
             cout << tabs << "Matrix:" << endl;
-            float* m = glm::value_ptr(localmatrix);
+            float* m = glm::value_ptr(transform);
             cout << tabs << "\t" << m[0] << " " << m[4] << " " << m[8 ] << " " << m[12] << endl;
             cout << tabs << "\t" << m[1] << " " << m[5] << " " << m[9 ] << " " << m[13] << endl;
             cout << tabs << "\t" << m[2] << " " << m[6] << " " << m[10] << " " << m[14] << endl;
@@ -119,9 +88,15 @@ namespace mvp {
             }
             
         }
+        
+        void update() {
+            
+        }
     
         string name;
-        glm::mat4 localmatrix;
+        glm::mat4 transform;
+        glm::mat4 local;
+        glm::mat4 world;
         vector<joint*> children;
     };
     
@@ -172,12 +147,22 @@ namespace mvp {
         vector<poly> polygons;
         string texture;
         
+        vector<float> s_joint_vec;
+        std::map<string,int> joint_holder;
+        
         joint* j_root;
         
         vert* vert_arr;
         poly* poly_arr;
         
         bool is_tex;
+        
+        void update() {
+            if(!j_root) return;
+            j_root->update();
+            
+            serialize_joints();
+        }
         
         void to_arr()
         {
@@ -305,7 +290,7 @@ namespace mvp {
                             }
                             //glm::mat4 t_mat4 = glm::transpose(glm::make_mat4(arr));
                             glm::mat4 t_mat4 = glm::make_mat4(arr);
-                            t_joint->localmatrix = t_mat4;
+                            t_joint->transform = t_mat4;
                             file >> munch;
                         }
                         file >> ss_tag;
@@ -363,7 +348,7 @@ namespace mvp {
         {
             if(!j_root) return;
             
-            std::map<string,int> joint_holder;
+            joint_holder.clear();
             
             int c = 0;
             weight_helper(joint_holder, j_root, c);
@@ -393,6 +378,30 @@ namespace mvp {
             // Add all children joints;
             for(int i = 0; i < root->children.size(); ++i) {
                 weight_helper(holder, root->children[i], c);
+            }
+        }
+        
+        void serialize_joints() {
+            if(!j_root) return;
+            
+            s_joint_vec.clear();
+            
+            map<int, glm::mat4> tmp_holder;
+            
+            map<string,int>::iterator m_it = joint_holder.begin();
+            while(m_it != joint_holder.end()) {
+                joint* t_joint = j_root->find_joint((*m_it).first);
+                tmp_holder.insert(pair<int,glm::mat4>((*m_it).second, t_joint->local));
+                ++m_it;
+            }
+            
+            map<int, glm::mat4>::iterator t_it = tmp_holder.begin();
+            while(t_it != tmp_holder.end()) {
+                float* v_ptr = glm::value_ptr(t_it->second);
+                for(int i = 0; i < 16; ++i) {
+                    s_joint_vec.push_back(v_ptr[i]);
+                }
+                ++t_it;
             }
         }
     };
