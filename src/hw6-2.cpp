@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <iostream>
 #include <GL/glew.h> //MUST come before GLFW!
 #include <SFML/Window.hpp>
 #include <SFML/OpenGL.hpp>
@@ -42,6 +43,7 @@ GLuint
 	ViewMatrixUniformLocation,
 	ModelMatrixUniformLocation,
     joint_uniform_loc,
+    tex_or_color_loc,
     TimeLocation,
 	samplerLoc,
 	BufferIds[3] = { 0 },
@@ -79,7 +81,7 @@ GLboolean LoadTexture( char* );
 int main(int argc, char* argv[])
 {
 	Initialize(argc, argv);
-
+    
     game_loop();
     
     DestroyPanda();
@@ -182,8 +184,7 @@ void game_loop(void){
         }
         if(exiting)
             break;
-        
-       
+
         // Display
         RenderFunction();
         window->Display();
@@ -223,7 +224,8 @@ void CreatePanda()
 {
     printf("Create\n");
     panda = new mvp::egg_model("models/bar-tri.egg");
-
+    panda->load_animation("models/bar-bend-tri.egg");
+    
 //Get some vertex and polygon info
     vert_count = (GLuint)panda->vertices.size();
     poly_count = (GLuint)panda->polygons.size();
@@ -262,8 +264,6 @@ void CreatePanda()
     //glUseProgram(nolight);
     OnGLError("ERROR: Could use shader program (Create)");
     
-    TimeLocation = glGetUniformLocation(nolight, "time");
-    OnGLError("ERROR: Could not get time uniform locations");
     ModelMatrixUniformLocation = glGetUniformLocation(nolight, "ModelMatrix");
     OnGLError("ERROR: Could not get Model uniform locations");
     ViewMatrixUniformLocation = glGetUniformLocation(nolight, "ViewMatrix");
@@ -271,6 +271,7 @@ void CreatePanda()
     ProjectionMatrixUniformLocation = glGetUniformLocation(nolight, "ProjectionMatrix");
     OnGLError("ERROR: Could not get Projection uniform locations");
     joint_uniform_loc = glGetUniformLocation(nolight, "Joints");
+    tex_or_color_loc = glGetUniformLocation(nolight, "tex_or_color");
     
     
     used_program = 0;
@@ -357,13 +358,6 @@ void DestroyPanda()
     OnGLError("ERROR: Could not destroy nolight shaders");
 	glDeleteProgram(nolight);
     OnGLError("ERROR: Could not destroy nolight program");
-    
-    glDetachShader(uberlight, ShaderIds[2]);
-	glDetachShader(uberlight, ShaderIds[3]);
-	glDeleteShader(ShaderIds[2]);
-	glDeleteShader(ShaderIds[3]);
-	glDeleteProgram(uberlight);
-	OnGLError("ERROR: Could not destroy uberlight shaders");
 
 	glDeleteBuffers(2, &BufferIds[1]);
 	glDeleteVertexArrays(1, &BufferIds[0]);
@@ -384,7 +378,7 @@ void DrawPanda(void)
             glUniformMatrix4fv(ModelMatrixUniformLocation, 1, GL_FALSE, glm::value_ptr(ModelMatrix));
             glUniformMatrix4fv(ViewMatrixUniformLocation, 1, GL_FALSE, glm::value_ptr(ViewMatrix));
             glUniformMatrix4fv(ProjectionMatrixUniformLocation, 1, GL_FALSE, glm::value_ptr(ProjectionMatrix));
-            glUniform1f(TimeLocation, (float)Now);
+            glUniform1i(tex_or_color_loc, (panda->is_tex) ? 1 : 0);
             glUniformMatrix4fv(joint_uniform_loc, panda->s_joint_vec.size() / 16, GL_FALSE, &(panda->s_joint_vec[0]));
             OnGLError("ERROR: Could not set the shader uniforms");
             break;

@@ -12,10 +12,10 @@ void main( void )
 {
     if(tex_or_color)
     {
-        FragColor = v_Color;
+        FragColor = texture(s_tex, v_Tex);
     }
     else
     {
-        FragColor = texture(s_tex, v_Tex);
+        FragColor = v_Color;
     }
 }
