@@ -30,7 +30,7 @@ glm::vec3 upworl = glm::vec3(0.0,1.0,0.0);
 //FOV, aspect ratio, near, far
 glm::mat4 ProjectionMatrix = glm::perspective(60.0f, 16.0f / 9.0f, 0.1f, 100.f);
 glm::mat4 ViewMatrix = glm::mat4(1.0f);
-glm::mat4 ModelMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.01f));
+glm::mat4 ModelMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f));
 
 unsigned FrameCount = 0;
 static const double PI = 3.14159265358979323846;
@@ -222,7 +222,7 @@ void RenderFunction(void)
 void CreatePanda()
 {
     printf("Create\n");
-    panda = new mvp::egg_model("models/bar_tri.egg");
+    panda = new mvp::egg_model("models/bar-tri.egg");
 
 //Get some vertex and polygon info
     vert_count = (GLuint)panda->vertices.size();

@@ -19,10 +19,16 @@ void main( void )
 {
     mat4 mvp = ProjectionMatrix * ViewMatrix * ModelMatrix;
     
-    vec4 t_joint = (Joints[in_Joints[0]] * vec4(in_Position.xyz, 1.0)) * in_Weights[0];
-    t_joint = t_joint + (Joints[in_Joints[0]] * vec4(in_Position.xyz, 1.0)) * in_Weights[0];
-    t_joint = t_joint + (Joints[in_Joints[0]] * vec4(in_Position.xyz, 1.0)) * in_Weights[0];
+    vec4 t_joint1 = vec4(0.0);
+    vec4 t_joint2 = vec4(0.0);
+    vec4 t_joint3 = vec4(0.0);
+    
+    if(in_Joints[0] > -1) t_joint1 = (Joints[in_Joints[0]] * vec4(in_Position.xyz, 1.0)) * in_Weights[0];
+    if(in_Joints[1] > -1) t_joint2 = (Joints[in_Joints[1]] * vec4(in_Position.xyz, 1.0)) * in_Weights[1];
+    if(in_Joints[2] > -1) t_joint3 = (Joints[in_Joints[2]] * vec4(in_Position.xyz, 1.0)) * in_Weights[2];
 
+    vec4 t_joint = t_joint1 + t_joint2 + t_joint3;
+    
     t_joint.w = 1.0; // Ensure against stupidity
     
     //gl_Position = mvp * t_joint;

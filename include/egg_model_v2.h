@@ -6,6 +6,7 @@
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <sstream>
 
 using namespace std;
 
@@ -104,7 +105,20 @@ namespace mvp {
             return NULL;
         }
         
-        
+        void print_joint(string tabs = "") {
+            cout << tabs << "Name: " << name << endl;
+            cout << tabs << "Matrix:" << endl;
+            float* m = glm::value_ptr(localmatrix);
+            cout << tabs << "\t" << m[0] << " " << m[4] << " " << m[8 ] << " " << m[12] << endl;
+            cout << tabs << "\t" << m[1] << " " << m[5] << " " << m[9 ] << " " << m[13] << endl;
+            cout << tabs << "\t" << m[2] << " " << m[6] << " " << m[10] << " " << m[14] << endl;
+            cout << tabs << "\t" << m[3] << " " << m[7] << " " << m[11] << " " << m[15] << endl;
+            if(children.size() > 0) cout << tabs << "Children" << endl;
+            for(size_t i = 0; i < children.size(); ++i) {
+                children[i]->print_joint(tabs + "\t");
+            }
+            
+        }
     
         string name;
         glm::mat4 localmatrix;
@@ -131,6 +145,18 @@ namespace mvp {
             j_root = NULL;
             is_tex = false;
             load_model(path);
+            
+            compute_weights();
+
+            if(j_root) j_root->print_joint("");
+            
+            cout << vertices[0].position[0] << " " << vertices[0].position[1] << " " << vertices[0].position[2] << " " << vertices[0].position[3] << endl;
+            cout << vertices[0].rgba[0] << " " << vertices[0].rgba[1] << " " << vertices[0].rgba[2] << " " << vertices[0].rgba[3] << endl;
+            cout << vertices[0].uv[0] << " " << vertices[0].uv[1] << endl;
+            cout << vertices[0].normal[0] << " " << vertices[0].normal[1] << " " << vertices[0].normal[2] << " " << vertices[0].normal[3] << endl;
+            cout << vertices[0].j_index[0] << " " << vertices[0].j_index[1] << " " << vertices[0].j_index[2] << endl;
+            cout << vertices[0].j_weight[0] << " " << vertices[0].j_weight[1] << " " << vertices[0].j_weight[2] << endl;
+            
             to_arr();
         }
         
@@ -246,7 +272,8 @@ namespace mvp {
                     polygons.push_back(t_poly);
                 }
                 else if(next_tag == "<Joint>") {
-                    j_root = munch_joint(file);
+                    joint* t_root = munch_joint(file);
+                    if(!j_root) j_root = t_root;
                 }
             }
             file.close();
@@ -276,7 +303,8 @@ namespace mvp {
                                 file >> t;
                                 arr[i] = t;
                             }
-                            glm::mat4 t_mat4 = glm::transpose(glm::make_mat4(arr));
+                            //glm::mat4 t_mat4 = glm::transpose(glm::make_mat4(arr));
+                            glm::mat4 t_mat4 = glm::make_mat4(arr);
                             t_joint->localmatrix = t_mat4;
                             file >> munch;
                         }
@@ -295,7 +323,10 @@ namespace mvp {
                     while(ss_tag != "}") {
                         if(ss_tag == "<Scalar>") {
                             file >> munch >> munch;
-                            file >> weight;
+                            string tmp_str;
+                            file >> tmp_str;
+                            stringstream ss(tmp_str);
+                            ss >> weight;
                             file >> munch;
                         }
                         else if(ss_tag == "<Ref>") {
@@ -316,9 +347,16 @@ namespace mvp {
                         }
                     }
                 }
+                else if(s_tag == "<Scalar>"){
+                    // Munch until we're out of whatever hole we landed in
+                    file >> munch >> munch >> munch >> munch;
+                }
+                    
             
                 file >> s_tag;
             }
+            
+            return t_joint;
         }
         
         void compute_weights()
@@ -327,7 +365,8 @@ namespace mvp {
             
             std::map<string,int> joint_holder;
             
-            int s = weight_helper(joint_holder, j_root, 0);
+            int c = 0;
+            weight_helper(joint_holder, j_root, c);
             
             vector<vert>::iterator it;
             vector<vert_weight>::iterator w_it;
@@ -345,18 +384,16 @@ namespace mvp {
             }
         }
         
-        int weight_helper(std::map<string,int> &holder, joint* root, int c)
+        void weight_helper(std::map<string,int> &holder, joint* root, int &c)
         {
             // Add root joint
             holder.insert(pair<string,int>(root->name, c));
             c++;
-            
+
             // Add all children joints;
             for(int i = 0; i < root->children.size(); ++i) {
-                c = weight_helper(holder, root->children[i], c);
+                weight_helper(holder, root->children[i], c);
             }
-            
-            return c;
         }
     };
 }

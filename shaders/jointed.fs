@@ -4,7 +4,7 @@ in vec4 v_Color;
 in vec2 v_Tex;
 in bool tex_or_color; // True for texture, false for color
 
-uniform Sampler2D s_tex;
+uniform sampler2D s_tex;
 
 out vec4 FragColor;
 
@@ -16,6 +16,6 @@ void main( void )
     }
     else
     {
-        FragColor = texture(s_tex, v_tex);
+        FragColor = texture(s_tex, v_Tex);
     }
 }
